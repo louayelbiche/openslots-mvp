@@ -1,0 +1,21 @@
+# Dependencies
+node_modules/
+.pnpm-store/
+
+# Build / cache
+.turbo/
+.next/
+dist/
+coverage/
+
+# Env
+.env
+.env.*
+
+# Logs
+*.log
+npm-debug.log*
+pnpm-debug.log*
+
+# OS junk
+.DS_Store
