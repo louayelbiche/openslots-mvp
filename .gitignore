@@ -19,3 +19,12 @@ pnpm-debug.log*
 
 # OS junk
 .DS_Store
+
+# OpenSlots Cleanup
+.DS_Store
+.turbo
+node_modules
+dist
+*.tsbuildinfo
+.env
+apps/*/.env
