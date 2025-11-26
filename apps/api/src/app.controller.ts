@@ -1,5 +1,4 @@
 import { Controller, Get, Post, Body } from "@nestjs/common";
-import { AppService } from "./app.service";
 
 type SearchRequest = {
   location: string;
@@ -18,13 +17,6 @@ type Offer = {
 
 @Controller()
 export class AppController {
-  constructor(private readonly appService: AppService) {}
-
-  @Get()
-  getHello(): string {
-    return this.appService.getHello();
-  }
-
   @Get("health")
   getHealth() {
     return { status: "ok" };
@@ -34,8 +26,6 @@ export class AppController {
   search(@Body() body: SearchRequest): { offers: Offer[] } {
     const { location, date, timeWindow, budget } = body;
 
-    // For now this is mocked logic.
-    // Later this will query the database and pricing engine.
     const offers: Offer[] = [
       {
         id: "1",
@@ -60,7 +50,12 @@ export class AppController {
       },
     ];
 
-    console.log("Search request:", { location, date, timeWindow, budget });
+    console.log("Search request:", {
+      location,
+      date,
+      timeWindow,
+      budget,
+    });
 
     return { offers };
   }
