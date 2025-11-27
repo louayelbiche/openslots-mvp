@@ -19,26 +19,27 @@ The audit system provides:
 
 ```
 claude/audit/
-├── README.md                    # This file
-├── version-history.json         # Audit manifest and version tracking
-├── 2025-11-27-v1.md            # First comprehensive audit
-└── YYYY-MM-DD-vN.md            # Future audits
+├── README.md                       # This file
+├── version-history.json            # Audit manifest and version tracking
+├── audit-2025-11-27-v1.md         # First comprehensive audit
+└── audit-YYYY-MM-DD-vN.md         # Future audits
 ```
 
 ---
 
 ## Naming Convention
 
-**Format:** `YYYY-MM-DD-vN.md`
+**Format:** `audit-YYYY-MM-DD-vN.md`
 
+- `audit-`: Prefix for easy identification
 - `YYYY-MM-DD`: Date audit was performed
-- `vN`: Version number (incremental, starts at v1)
+- `-vN`: Version number (incremental, starts at v1)
 - `.md`: Markdown format for readability
 
 **Examples:**
-- `2025-11-27-v1.md` - First audit (baseline)
-- `2025-12-15-v2.md` - Second audit (after bidding implementation)
-- `2026-01-10-v3.md` - Third audit (before production)
+- `audit-2025-11-27-v1.md` - First audit (baseline)
+- `audit-2025-12-15-v2.md` - Second audit (after bidding implementation)
+- `audit-2026-01-10-v3.md` - Third audit (before production)
 
 ---
 
@@ -196,14 +197,14 @@ Audits are integrated with the planning and session tracking system:
 
 ## Current Status
 
-**Latest Audit:** v1 (2025-11-27)
+**Latest Audit:** v1 (audit-2025-11-27-v1.md)
 - **Status:** HEALTHY
 - **Confidence:** HIGH
 - **Critical Issues:** 2
 - **Warnings:** 5
 - **Positive Findings:** 12
 
-**Next Audit:** TBD (after bidding implementation)
+**Next Audit:** TBD (after bidding implementation - will be audit-YYYY-MM-DD-v2.md)
 
 ---
 
@@ -224,18 +225,19 @@ cat claude/audit/version-history.json | jq .
 ### Specific Version
 ```bash
 # View specific audit version
-cat claude/audit/2025-11-27-v1.md
+cat claude/audit/audit-2025-11-27-v1.md
 ```
 
 ---
 
 ## Audit Versioning Rules
 
-1. **Version Numbers**: Sequential integers starting at 1
-2. **One Audit Per Day**: If multiple audits on same day, increment version
-3. **No Retroactive Changes**: Never modify published audit files
-4. **Version History**: Always update manifest when adding audit
-5. **Linked Sessions**: Reference session IDs that performed audit work
+1. **Naming Format**: `audit-YYYY-MM-DD-vN.md` (audit- prefix required)
+2. **Version Numbers**: Sequential integers starting at 1
+3. **One Audit Per Day**: If multiple audits on same day, increment version
+4. **No Retroactive Changes**: Never modify published audit files
+5. **Version History**: Always update manifest when adding audit
+6. **Linked Sessions**: Reference session IDs that performed audit work
 
 ---
 

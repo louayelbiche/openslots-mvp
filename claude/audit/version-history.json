@@ -4,13 +4,13 @@
     "description": "Versioned audit system for OpenSlots project tracking",
     "created": "2025-11-27",
     "location": "claude/audit/",
-    "namingConvention": "YYYY-MM-DD-vN.md"
+    "namingConvention": "audit-YYYY-MM-DD-vN.md"
   },
   "audits": [
     {
       "version": 1,
       "date": "2025-11-27",
-      "filename": "2025-11-27-v1.md",
+      "filename": "audit-2025-11-27-v1.md",
       "auditor": "build-lead",
       "session": "session-03",
       "scope": "comprehensive",
