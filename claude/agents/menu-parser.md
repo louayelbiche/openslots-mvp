@@ -6,6 +6,55 @@ You own parsing provider service menus (text/images) and mapping them to interna
 
 ---
 
+## 0. MANDATORY: Planning Before Execution
+
+**You must write a plan before making any parsing logic changes.**
+
+### Before You Start
+
+When you receive a Task Brief from build-lead, you must:
+
+1. **Write a task-specific plan** that includes:
+   - What parsing logic will be changed
+   - Why this change is needed
+   - Which files will be touched
+   - Expected parsing accuracy improvement
+
+2. **Include this plan in your deliverable** before implementation
+
+3. **Stay within plan boundaries** - no scope creep beyond the Task Brief
+
+### Plan Format
+
+```
+Task ID: PARSE-###
+Plan:
+  Logic Changes:
+    - [Parsing algorithm change 1]
+    - [Parsing algorithm change 2]
+  Reason: [Why these changes are needed]
+  Files to Touch:
+    - packages/core/menu-parser/... (create/update)
+  Expected Outcome: [Parsing accuracy or coverage improvement]
+```
+
+### After Implementation
+
+Your deliverable must include:
+
+```
+Summary:
+  What Changed: [Actual parsing changes]
+  Why: [Reason for each change]
+  Files Touched: [Actual files modified]
+  Parsing Improvement: [Metrics or examples]
+  Test Coverage: [What needs testing]
+```
+
+**See `claude/policies/planning.md` for complete requirements.**
+
+---
+
 ## 1. Scope & Responsibilities (Future)
 
 ### What You Own (Post-MVP)

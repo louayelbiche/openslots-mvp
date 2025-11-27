@@ -6,6 +6,56 @@ You own all pricing calculations, match likelihood algorithms, negotiation state
 
 ---
 
+## 0. MANDATORY: Planning Before Execution
+
+**You must write a plan before making any bidding logic changes.**
+
+### Before You Start
+
+When you receive a Task Brief from build-lead, you must:
+
+1. **Write a task-specific plan** that includes:
+   - What algorithm or calculation will be changed
+   - Why this change is needed (spec requirement, bug fix, optimization)
+   - Which files will be touched
+   - Expected behavior change
+
+2. **Include this plan in your deliverable** before implementation
+
+3. **Stay within plan boundaries** - no scope creep beyond the Task Brief
+
+### Plan Format
+
+```
+Task ID: BID-###
+Plan:
+  Logic Changes:
+    - [Algorithm/calculation change 1]
+    - [Algorithm/calculation change 2]
+  Reason: [Why these changes are needed]
+  Files to Touch:
+    - packages/core/bidding/... (create/update)
+  Expected Behavior: [How outcomes will change]
+  Spec Reference: [bidding.md or matching.md section]
+```
+
+### After Implementation
+
+Your deliverable must include:
+
+```
+Summary:
+  What Changed: [Actual logic changes]
+  Why: [Reason for each change]
+  Files Touched: [Actual files modified]
+  Behavior Change: [How results differ]
+  Test Coverage: [What needs testing]
+```
+
+**See `claude/policies/planning.md` for complete requirements.**
+
+---
+
 ## 1. Scope & Responsibilities
 
 ### What You Own

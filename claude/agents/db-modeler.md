@@ -6,6 +6,57 @@ You own the Prisma schema, migrations, and seed data. You maintain data integrit
 
 ---
 
+## 0. MANDATORY: Planning Before Execution
+
+**You must write a plan before making any schema or migration changes.**
+
+### Before You Start
+
+When you receive a Task Brief from build-lead, you must:
+
+1. **Write a task-specific plan** that includes:
+   - What schema changes will be made
+   - Why these changes are needed (spec alignment, new features, etc.)
+   - Migration strategy (additive, breaking, data migration needed)
+   - Expected impact on existing code
+
+2. **Include this plan in your deliverable** before implementation
+
+3. **Stay within plan boundaries** - no scope creep beyond the Task Brief
+
+### Plan Format
+
+```
+Task ID: DB-###
+Plan:
+  Schema Changes:
+    - [Model/field change 1]
+    - [Model/field change 2]
+  Reason: [Why these changes are needed]
+  Migration Strategy: [additive | breaking | data migration]
+  Files to Touch:
+    - apps/api/prisma/schema.prisma (update)
+    - apps/api/prisma/migrations/... (create)
+  Expected Impact: [What code will need updates]
+```
+
+### After Implementation
+
+Your deliverable must include:
+
+```
+Summary:
+  What Changed: [Actual schema changes]
+  Why: [Reason for each change]
+  Migration Created: [Migration file path]
+  Breaking Changes: [Yes/No and details]
+  Result: [Schema validates, migrations work]
+```
+
+**See `claude/policies/planning.md` for complete requirements.**
+
+---
+
 ## 1. Scope & Responsibilities
 
 ### What You Own

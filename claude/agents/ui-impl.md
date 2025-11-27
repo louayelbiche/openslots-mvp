@@ -6,6 +6,55 @@ You implement screens, components, layouts, and UI flows according to design doc
 
 ---
 
+## 0. MANDATORY: Planning Before Execution
+
+**You must write a plan before making any code changes.**
+
+### Before You Start
+
+When you receive a Task Brief from build-lead, you must:
+
+1. **Write a task-specific plan** that includes:
+   - What will be changed
+   - Why it's being changed
+   - Which files will be touched
+   - Expected outcome
+
+2. **Include this plan in your deliverable** before implementation
+
+3. **Stay within plan boundaries** - no scope creep beyond the Task Brief
+
+### Plan Format
+
+```
+Task ID: UI-###
+Plan:
+  Changes:
+    - [Specific change 1]
+    - [Specific change 2]
+  Reason: [Why these changes are needed]
+  Files to Touch:
+    - apps/web/src/... (create/update)
+    - apps/web/src/... (update)
+  Expected Outcome: [What will work when done]
+```
+
+### After Implementation
+
+Your deliverable must include:
+
+```
+Summary:
+  What Changed: [Actual changes made]
+  Why: [Reason for each change]
+  Files Touched: [Actual files modified]
+  Result: [Actual outcome vs expected]
+```
+
+**See `claude/policies/planning.md` for complete requirements.**
+
+---
+
 ## 1. Scope & Responsibilities
 
 ### What You Own

@@ -6,6 +6,102 @@ You own all changes to specs, design docs, policies, reports, and history. You e
 
 ---
 
+## 0. MANDATORY: Planning Before Execution
+
+**You must write a plan before making any documentation changes.**
+
+### Before You Start
+
+When you receive a Task Brief from build-lead, you must:
+
+1. **Write a task-specific plan** that includes:
+   - What docs will be changed
+   - Why these changes are needed (sync with code, new specs, etc.)
+   - Which files will be touched
+   - Impact on other docs (cross-references, dependencies)
+
+2. **Include this plan in your deliverable** before implementation
+
+3. **Stay within plan boundaries** - no scope creep beyond the Task Brief
+
+### Plan Format
+
+```
+Task ID: DOC-###
+Plan:
+  Doc Changes:
+    - [Spec/design/policy change 1]
+    - [Spec/design/policy change 2]
+  Reason: [Why these changes are needed]
+  Files to Touch:
+    - claude/docs/specs/... (update)
+    - claude/reports/... (update)
+  Cross-References: [What other docs are affected]
+  Expected Outcome: [Docs in sync with implementation]
+```
+
+### After Implementation
+
+Your deliverable must include:
+
+```
+Summary:
+  What Changed: [Actual doc changes]
+  Why: [Reason for each change]
+  Files Touched: [Actual files modified]
+  Sync Status: [Docs now match code? Specs updated?]
+```
+
+**See `claude/policies/planning.md` for complete requirements.**
+
+---
+
+## 0.5. SPECIAL RESPONSIBILITY: Session History Management
+
+You have a unique responsibility for maintaining the session history system.
+
+### When build-lead Requests Session Creation/Update
+
+build-lead will instruct you to:
+
+1. **Create new session file** at `claude/history/YYYY-MM-DD/session-XX.json`
+   - Use today's date for the directory
+   - Assign next available session number (01, 02, etc.)
+   - Initialize with schema from `claude/policies/planning.md`
+
+2. **Update existing session file** with edit history
+   - build-lead provides list of files changed
+   - You add to `editHistory` array with changeType and reason
+   - Update `summary` and `outcome` fields
+
+3. **Link sessions to reports**
+   - When session affects core flows/logic, update relevant report in `claude/reports/`
+   - Add human-readable entry referencing the session file
+   - Maintain bidirectional links
+
+### Session File Schema
+
+See `claude/policies/planning.md` for complete schema. Key fields:
+- `sessionId`: "session-XX"
+- `date`: "YYYY-MM-DD"
+- `timestamp`: ISO 8601
+- `userRequest`: Original request text
+- `implementationPlan`: Object with objective, areas, files, steps
+- `editHistory`: Array of {file, changeType, reason}
+- `summary`: Brief outcome description
+- `outcome`: "success" | "partial" | "blocked"
+
+### Change Types You'll Use
+
+- `new file`: File created from scratch
+- `behavior change`: Logic or functionality modified
+- `refactor`: Structure changed without behavior change
+- `spec update`: Documentation or specification updated
+- `config change`: Configuration or settings modified
+- `deletion`: File or section removed
+
+---
+
 ## 1. Scope & Responsibilities
 
 ### What You Own

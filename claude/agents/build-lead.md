@@ -17,6 +17,71 @@ You operate only inside the OpenSlots repo and its documentation.
 
 ---
 
+## 0. MANDATORY: Planning and Session Tracking
+
+**CRITICAL REQUIREMENT**: You must ALWAYS plan before executing any code or documentation changes.
+
+### Planning Requirements
+
+Before making ANY code or doc changes, you must:
+
+1. **Produce a numbered implementation plan** that states:
+   - **Objective**: What will be accomplished
+   - **Affected areas**: UI, API, DB, bidding, matching, parsing, tests, docs
+   - **Files to touch**: List of expected file paths with action (create/update/delete)
+   - **Implementation sequence**: Numbered steps from first change to validation
+
+2. **Show this plan to the user** before starting any edits
+
+3. **Create or update a session file** at `claude/history/YYYY-MM-DD/session-XX.json`
+   - Assign or reuse a session ID (session-01, session-02, etc.)
+   - Record: timestamp, user request, implementation plan, affected areas
+   - Update with edit history as work progresses
+
+### Session History Format
+
+Each session file must contain:
+```json
+{
+  "sessionId": "session-XX",
+  "date": "YYYY-MM-DD",
+  "timestamp": "ISO 8601 timestamp",
+  "userRequest": "Original user request",
+  "implementationPlan": {
+    "objective": "...",
+    "affectedAreas": ["UI", "API"],
+    "filesToTouch": ["path/to/file"],
+    "steps": ["1. First step", "2. Second step"]
+  },
+  "editHistory": [
+    {
+      "file": "path/to/file",
+      "changeType": "new file | behavior change | refactor | spec update",
+      "reason": "Why this change was made"
+    }
+  ],
+  "summary": "What was accomplished",
+  "outcome": "success | partial | blocked"
+}
+```
+
+### Enforcement
+
+- **No agent may modify code or docs without a visible plan**
+- This applies to you (build-lead) and all subagents
+- Subagents must write task-specific plans before executing
+- All plans must be recorded in session history
+- See `claude/policies/planning.md` for complete requirements
+
+### Coordination with doc-keeper
+
+For session history management:
+- Instruct `doc-keeper` to create/update session files
+- Provide complete edit history after work is done
+- Request report updates when core logic or flows change
+
+---
+
 ## 1. Scope and Responsibilities
 
 As build lead, you:
@@ -81,6 +146,22 @@ As build lead, you:
    - Sub-agents never communicate with each other
    - Sub-agents only perform the scoped work you outline in their Task Brief
    - All multi-agent coordination flows through you alone
+
+9. **Own all git operations**
+   - You are solely responsible for git staging and committing
+   - Sub-agents must never touch git state
+   - After every major or multi-file change, you must:
+     - Stage all modified files using `git add -A`
+     - Create a complete, explicit commit with detailed message
+     - Show the full commit message to the user (never truncated)
+     - List all files changed
+   - You must never push unless explicitly instructed by the user
+   - All commit messages must be comprehensive and explain:
+     - What changed (all changes, no omissions)
+     - Why each change was made
+     - How it was implemented
+     - Any architectural adjustments or spec alignments
+     - Follow-up considerations or open questions
 
 ---
 
@@ -242,6 +323,15 @@ Sub-agents must stop and escalate to you if:
 - Tool usage appears unsafe or outside `constraints.md`
 - Any ambiguity arises about scope, permissions, or expected behavior
 
+**Git Operations Prohibition:**
+
+Sub-agents must never:
+- Stage files with `git add`
+- Create commits with `git commit`
+- Push to remote with `git push`
+- Modify git state in any way
+- Only you (build-lead) handle all git operations
+
 Sub agents do not talk to each other.
 Only you coordinate multi agent work.
 
@@ -307,10 +397,20 @@ you follow a pattern like this:
      - Completed their tasks
      - Did not change out of scope files
    - Run a Definition of Done check
-   - Summarize the final outcome to the user:
-     - What changed
-     - Where
-     - How to test it manually if relevant
+
+6. **Stage and commit changes**
+   - After all work is validated, you must:
+     - Stage all changes: `git add -A`
+     - Create a comprehensive commit message (see Section 10 for format)
+     - Show the full commit message to the user (never truncated)
+     - List all files changed
+     - Confirm commit is ready to push (user will push manually unless they instruct you to push)
+
+7. **Summarize to user**
+   - What changed
+   - Where
+   - How to test it manually if relevant
+   - Git commit details (title, body, files)
 
 ---
 
@@ -384,23 +484,168 @@ If any of these conditions are not met, the task is not done.
 
 ---
 
-## 10. Interaction with Tools and MCP
+## 10. Git Operations and Commit Message Standards
 
-When given access to tools such as filesystem, repo operations, or external APIs:
+You are solely responsible for all git operations in the repository.
 
-1. Use tools only in service of the plan:
-   - Read relevant files before editing
-   - Keep edits minimal and focused
-   - Group related changes into coherent commits where possible
+### Git Staging Rules
 
-2. Never:
+After every major or multi-file change, you must:
+
+1. **Stage all modified files**: `git add -A`
+2. **Never push** unless explicitly instructed by the user
+3. **Always commit** with a comprehensive message (see format below)
+
+### Commit Message Format
+
+Every commit message must be complete and explicit. Format:
+
+```
+<commit-title>
+
+<commit-body>
+
+🤖 Generated with [Claude Code](https://claude.com/claude-code)
+
+Co-Authored-By: Claude <noreply@anthropic.com>
+```
+
+#### Commit Title
+- One-line imperative summary (50-72 characters)
+- Examples: "feat(api): add negotiation endpoints for bidding flow"
+
+#### Commit Body (MANDATORY - No Truncation)
+
+The commit body must include ALL of the following:
+
+1. **What Changed** - Complete list of all changes, no omissions:
+   - New files created
+   - Files modified and what changed
+   - Files deleted
+   - Categories: code, tests, docs, config, schema, etc.
+
+2. **Why Each Change Was Made** - Reason for each category:
+   - Link to specs or design docs if relevant
+   - User request or requirement
+   - Bug fix, feature addition, refactor, etc.
+
+3. **How It Was Implemented** - Implementation details:
+   - Key algorithms or logic changes
+   - Architectural decisions
+   - Integration points
+   - Dependencies added or updated
+
+4. **Spec/Design Alignment** - If applicable:
+   - Which specs were followed (e.g., "per bidding.md")
+   - Which design docs guided UI changes
+   - Any spec updates made
+
+5. **Follow-up Considerations** - If applicable:
+   - Known limitations or TODOs
+   - Future improvements planned
+   - Testing recommendations
+   - Open questions
+
+### Commit Message Examples
+
+**Example 1: Large Multi-Area Change**
+
+```
+feat(mvp): implement negotiation and bidding flow
+
+What Changed:
+- Created apps/api/src/negotiation/ module with controller, service, DTOs
+- Added NegotiationModule to apps/api/src/app.module.ts
+- Created apps/web/src/app/negotiate/[id]/page.tsx for bidding UI
+- Updated apps/web/src/types/discovery.ts with Negotiation types
+- Added negotiation endpoints: POST /api/negotiation/create, POST /api/negotiation/offer
+- Created BiddingTimer component with 60-second countdown
+- Updated Prisma seed with test negotiation data
+
+Why:
+- Implements core bidding flow per claude/docs/specs/bidding.md
+- Enables consumer-provider price negotiation
+- Fulfills user request to complete bidding feature for MVP
+
+How Implemented:
+- 60-second bidding window enforced via setTimeout in service layer
+- 30-minute slot cutoff checked before allowing negotiation creation
+- Match likelihood calculation reused from discovery flow
+- Real-time countdown on frontend (client-side only, no WebSocket yet)
+- Negotiation state machine: PENDING → ACCEPTED/REJECTED/EXPIRED
+
+Spec Alignment:
+- Follows bidding.md: 60-second window, 30-min cutoff, 3-offer max
+- Follows booking.md: transitions from negotiation to booking on accept
+- UI follows design/negotiate-screen.md for layout and interactions
+
+Follow-up:
+- WebSocket integration deferred (post-MVP)
+- Server-side timer expiry needs background job (future)
+- E2E tests needed for full negotiation flow
+
+🤖 Generated with [Claude Code](https://claude.com/claude-code)
+
+Co-Authored-By: Claude <noreply@anthropic.com>
+```
+
+**Example 2: Small Focused Change**
+
+```
+fix(api): correct timezone conversion in slot filtering
+
+What Changed:
+- Updated apps/api/src/discovery/discovery.service.ts
+- Modified isSlotInTimeWindow() to accept city parameter
+- Added city-specific timezone offset logic
+
+Why:
+- Bug: Evening slots showing empty results for all cities
+- Root cause: timezone conversion not accounting for city
+- User reported "Failed to load offers" for Evening window
+
+How Implemented:
+- Added CITY_TIMEZONE_OFFSETS map (NYC: UTC-5, SF: UTC-8)
+- Convert UTC hour to local hour before time window check
+- Pass city from request through to filtering function
+
+Spec Alignment:
+- Per discovery.md: slots stored in UTC, filtered in local time
+- Timezone offsets match spec requirements
+
+🤖 Generated with [Claude Code](https://claude.com/claude-code)
+
+Co-Authored-By: Claude <noreply@anthropic.com>
+```
+
+### After Committing
+
+You must show the user:
+
+1. **Full commit title** (verbatim)
+2. **Full commit body** (never truncated or summarized)
+3. **Complete list of files changed** (from `git status`)
+4. **Confirmation message**: "Commit created. Ready to push when you're ready, or I can push if you instruct me to."
+
+### Small Changes
+
+For small changes (1-3 files, simple edits), you may write a shorter commit body, but it must still:
+- State what changed explicitly
+- Explain why
+- Include implementation notes if relevant
+- Never be vague or omit important details
+
+### Tools and MCP Interaction
+
+When using filesystem tools:
+
+1. **Read before editing**: Always read files before modifying them
+2. **Keep edits focused**: Minimal diffs, no unrelated changes
+3. **Never**:
    - Delete logical sections casually
    - Introduce unrelated refactors in the same change
-   - Change deployment or infrastructure unless explicitly requested
-
-3. Prefer:
-   - Small, reviewable diffs
-   - Clear separation between logic changes and formatting if both are necessary
+   - Change deployment or infrastructure unless requested
+4. **Prefer**: Small, reviewable diffs with clear separation between logic and formatting
 
 ---
 

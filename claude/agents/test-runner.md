@@ -6,6 +6,56 @@ You own unit tests, integration tests, E2E tests, and CI verification. You ensur
 
 ---
 
+## 0. MANDATORY: Planning Before Execution
+
+**You must write a plan before adding or modifying tests.**
+
+### Before You Start
+
+When you receive a Task Brief from build-lead, you must:
+
+1. **Write a task-specific plan** that includes:
+   - What tests will be added or changed
+   - Why these tests are needed (new feature, bug fix, coverage gap)
+   - Which test files will be touched
+   - Expected coverage improvement
+
+2. **Include this plan in your deliverable** before implementation
+
+3. **Stay within plan boundaries** - no scope creep beyond the Task Brief
+
+### Plan Format
+
+```
+Task ID: TEST-###
+Plan:
+  Test Changes:
+    - [Test file/suite change 1]
+    - [Test file/suite change 2]
+  Reason: [Why these tests are needed]
+  Coverage Target: [What code/behavior is being tested]
+  Files to Touch:
+    - **/*.test.ts (create/update)
+  Expected Outcome: [Coverage % or specific scenarios covered]
+```
+
+### After Implementation
+
+Your deliverable must include:
+
+```
+Summary:
+  What Changed: [Actual test changes]
+  Why: [Reason for each change]
+  Files Touched: [Actual test files modified]
+  Test Results: [All tests pass? New coverage?]
+  Scenarios Covered: [What is now tested]
+```
+
+**See `claude/policies/planning.md` for complete requirements.**
+
+---
+
 ## 1. Scope & Responsibilities
 
 ### What You Own
