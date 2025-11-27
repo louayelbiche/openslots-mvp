@@ -1,165 +1,228 @@
 'use client';
 
-import { useState, type FormEvent } from 'react';
+import { useState } from 'react';
+import { useRouter } from 'next/navigation';
+import type { ServiceCategory, TimeWindow } from '../types/discovery';
 
-const API_BASE_URL =
-  process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:3001';
+// Service categories with display info
+const SERVICE_CATEGORIES: Array<{
+  value: ServiceCategory;
+  label: string;
+  icon: string;
+}> = [
+  { value: 'MASSAGE', label: 'Massage', icon: '💆' },
+  { value: 'ACUPUNCTURE', label: 'Acupuncture', icon: '🪡' },
+  { value: 'NAILS', label: 'Nails', icon: '💅' },
+  { value: 'HAIR', label: 'Hair', icon: '✂️' },
+  { value: 'FACIALS_AND_SKIN', label: 'Facials & Skin', icon: '🧴' },
+  { value: 'LASHES_AND_BROWS', label: 'Lashes & Brows', icon: '👁️' },
+];
 
-type Offer = {
-  id: string;
-  providerName: string;
-  time: string;
-  price: number;
-  matchScore: 'low' | 'medium' | 'high';
-};
+// Time window options
+const TIME_WINDOWS: Array<{
+  value: TimeWindow;
+  label: string;
+  description: string;
+}> = [
+  { value: 'Morning', label: 'Morning', description: '9 AM - 12 PM' },
+  { value: 'Afternoon', label: 'Afternoon', description: '12 PM - 4 PM' },
+  { value: 'Evening', label: 'Evening', description: '4 PM - 8 PM' },
+  { value: 'Custom', label: 'Any Time', description: 'All available' },
+];
 
-export default function Home() {
-  const [location, setLocation] = useState('NYC');
-  const [date, setDate] = useState('');
-  const [timeWindow, setTimeWindow] = useState('17:00-21:00');
-  const [budget, setBudget] = useState('70');
-  const [offers, setOffers] = useState<Offer[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+export default function IndexScreen() {
+  const router = useRouter();
+  const [selectedService, setSelectedService] = useState<ServiceCategory | null>(null);
+  const [city, setCity] = useState('');
+  const [zipCode, setZipCode] = useState('');
+  const [timeWindow, setTimeWindow] = useState<TimeWindow | null>(null);
+  const [cityError, setCityError] = useState('');
 
-  async function handleSubmit(e: FormEvent<HTMLFormElement>) {
-    e.preventDefault();
-    setLoading(true);
-    setError(null);
+  const isFormValid = selectedService && city.trim() && timeWindow;
 
-    try {
-      const res = await fetch(`${API_BASE_URL}/search`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          location,
-          date,
-          timeWindow,
-          budget: Number(budget),
-        }),
-      });
+  const handleSubmit = () => {
+    if (!isFormValid) return;
 
-      if (!res.ok) {
-        throw new Error(`Status ${res.status}`);
-      }
-
-      const data = (await res.json()) as { offers: Offer[] };
-      setOffers(data.offers ?? []);
-    } catch (err) {
-      console.error(err);
-      setError('Something went wrong. Try again.');
-    } finally {
-      setLoading(false);
+    // Validate city is not empty
+    if (!city.trim()) {
+      setCityError('Please enter a valid city');
+      return;
     }
-  }
 
-  function matchColor(score: Offer['matchScore']) {
-    if (score === 'high') return 'bg-green-200';
-    if (score === 'medium') return 'bg-yellow-200';
-    return 'bg-orange-200';
-  }
+    setCityError('');
+
+    // Build query params
+    const params = new URLSearchParams({
+      service: selectedService,
+      city: city.trim(),
+      timeWindow: timeWindow,
+    });
+
+    if (zipCode.trim()) {
+      params.set('zipCode', zipCode.trim());
+    }
+
+    router.push(`/budget?${params.toString()}`);
+  };
 
   return (
-    <main className="min-h-screen flex flex-col items-center justify-start p-6 bg-slate-50">
-      <div className="w-full max-w-3xl space-y-6">
-        <h1 className="text-2xl font-semibold">OpenSlots, early MVP</h1>
-        <p className="text-sm text-slate-600">
-          Enter a simple search, we will return mocked offers from the API.
-        </p>
+    <main className="min-h-screen bg-slate-50">
+      <div className="max-w-lg mx-auto px-4 py-8">
+        {/* Header */}
+        <div className="mb-8">
+          <h1 className="text-2xl font-bold text-slate-900 mb-2">
+            What are you looking for?
+          </h1>
+          <p className="text-slate-600 text-sm">
+            Choose your service to begin
+          </p>
+        </div>
 
-        <form
-          onSubmit={handleSubmit}
-          className="grid gap-4 p-4 bg-white rounded-lg shadow-sm border grid-cols-1 md:grid-cols-4"
+        {/* Service Category Cards */}
+        <section className="mb-8">
+          <div className="grid grid-cols-2 gap-3">
+            {SERVICE_CATEGORIES.map((service) => (
+              <button
+                key={service.value}
+                type="button"
+                onClick={() => setSelectedService(service.value)}
+                className={`
+                  flex flex-col items-center justify-center
+                  p-4 rounded-xl border-2 transition-all
+                  min-h-[100px] text-center
+                  ${
+                    selectedService === service.value
+                      ? 'border-slate-900 bg-slate-900 text-white shadow-lg'
+                      : 'border-slate-200 bg-white text-slate-900 hover:border-slate-400'
+                  }
+                `}
+                aria-pressed={selectedService === service.value}
+              >
+                <span className="text-2xl mb-2" aria-hidden="true">
+                  {service.icon}
+                </span>
+                <span className="font-medium text-sm">{service.label}</span>
+              </button>
+            ))}
+          </div>
+        </section>
+
+        {/* City and Zip Code */}
+        <section className="mb-8">
+          <h2 className="text-sm font-semibold text-slate-700 mb-3">
+            Location
+          </h2>
+          <div className="flex gap-3">
+            <div className="flex-1">
+              <label htmlFor="city" className="sr-only">
+                City
+              </label>
+              <input
+                id="city"
+                type="text"
+                placeholder="City (e.g., New York)"
+                value={city}
+                onChange={(e) => {
+                  setCity(e.target.value);
+                  if (cityError) setCityError('');
+                }}
+                className={`
+                  w-full px-4 py-3 rounded-xl border-2 text-sm
+                  placeholder:text-slate-400
+                  focus:outline-none focus:ring-2 focus:ring-slate-900 focus:border-transparent
+                  ${cityError ? 'border-orange-400' : 'border-slate-200'}
+                `}
+                aria-describedby={cityError ? 'city-error' : undefined}
+              />
+              {cityError && (
+                <p id="city-error" className="mt-1 text-xs text-orange-600">
+                  {cityError}
+                </p>
+              )}
+            </div>
+            <div className="w-28">
+              <label htmlFor="zipCode" className="sr-only">
+                Zip Code (optional)
+              </label>
+              <input
+                id="zipCode"
+                type="text"
+                placeholder="Zip"
+                value={zipCode}
+                onChange={(e) => setZipCode(e.target.value.replace(/\D/g, '').slice(0, 5))}
+                maxLength={5}
+                inputMode="numeric"
+                className="
+                  w-full px-4 py-3 rounded-xl border-2 border-slate-200 text-sm
+                  placeholder:text-slate-400
+                  focus:outline-none focus:ring-2 focus:ring-slate-900 focus:border-transparent
+                "
+              />
+            </div>
+          </div>
+        </section>
+
+        {/* Time Window Selector */}
+        <section className="mb-8">
+          <h2 className="text-sm font-semibold text-slate-700 mb-3">
+            Preferred Time
+          </h2>
+          <div className="grid grid-cols-2 gap-3">
+            {TIME_WINDOWS.map((tw) => (
+              <button
+                key={tw.value}
+                type="button"
+                onClick={() => setTimeWindow(tw.value)}
+                className={`
+                  flex flex-col items-start p-4 rounded-xl border-2 transition-all text-left
+                  ${
+                    timeWindow === tw.value
+                      ? 'border-slate-900 bg-slate-900 text-white'
+                      : 'border-slate-200 bg-white text-slate-900 hover:border-slate-400'
+                  }
+                `}
+                aria-pressed={timeWindow === tw.value}
+              >
+                <span className="font-medium text-sm">{tw.label}</span>
+                <span
+                  className={`text-xs mt-1 ${
+                    timeWindow === tw.value ? 'text-slate-300' : 'text-slate-500'
+                  }`}
+                >
+                  {tw.description}
+                </span>
+              </button>
+            ))}
+          </div>
+        </section>
+
+        {/* Continue Button */}
+        <button
+          type="button"
+          onClick={handleSubmit}
+          disabled={!isFormValid}
+          className={`
+            w-full py-4 rounded-xl font-semibold text-base transition-all
+            ${
+              isFormValid
+                ? 'bg-slate-900 text-white hover:bg-slate-800 shadow-lg'
+                : 'bg-slate-200 text-slate-400 cursor-not-allowed'
+            }
+          `}
+          aria-disabled={!isFormValid}
         >
-          <div className="flex flex-col gap-1">
-            <label className="text-xs font-medium text-slate-700">
-              Location
-            </label>
-            <input
-              className="border rounded px-2 py-1 text-sm"
-              value={location}
-              onChange={(e) => setLocation(e.target.value)}
-              placeholder="City"
-            />
-          </div>
+          Find Availability
+        </button>
 
-          <div className="flex flex-col gap-1">
-            <label className="text-xs font-medium text-slate-700">Date</label>
-            <input
-              type="date"
-              className="border rounded px-2 py-1 text-sm"
-              value={date}
-              onChange={(e) => setDate(e.target.value)}
-            />
-          </div>
-
-          <div className="flex flex-col gap-1">
-            <label className="text-xs font-medium text-slate-700">
-              Time window
-            </label>
-            <input
-              className="border rounded px-2 py-1 text-sm"
-              value={timeWindow}
-              onChange={(e) => setTimeWindow(e.target.value)}
-              placeholder="17:00-21:00"
-            />
-          </div>
-
-          <div className="flex flex-col gap-1">
-            <label className="text-xs font-medium text-slate-700">Budget</label>
-            <input
-              type="number"
-              className="border rounded px-2 py-1 text-sm"
-              value={budget}
-              onChange={(e) => setBudget(e.target.value)}
-            />
-          </div>
-
-          <div className="md:col-span-4 flex justify-end">
-            <button
-              type="submit"
-              disabled={loading}
-              className="px-4 py-2 text-sm rounded bg-black text-white disabled:opacity-60"
-            >
-              {loading ? 'Searching...' : 'Search slots'}
-            </button>
-          </div>
-        </form>
-
-        {error && (
-          <p className="text-sm text-red-600">
-            {error}
+        {/* Helper text */}
+        {!isFormValid && (
+          <p className="text-center text-xs text-slate-500 mt-3">
+            {!selectedService && 'Select a service, '}
+            {!city.trim() && 'enter your city, '}
+            {!timeWindow && 'choose a time window'}
+            {' to continue'}
           </p>
         )}
-
-        <div className="space-y-3">
-          {offers.map((offer) => (
-            <div
-              key={offer.id}
-              className={
-                'flex items-center justify-between p-4 rounded-lg border bg-white ' +
-                matchColor(offer.matchScore)
-              }
-            >
-              <div>
-                <p className="font-medium text-sm">{offer.providerName}</p>
-                <p className="text-xs text-slate-600">{offer.time}</p>
-              </div>
-              <div className="text-right">
-                <p className="font-semibold text-sm">\${offer.price}</p>
-                <p className="text-xs text-slate-600">
-                  Match: {offer.matchScore}
-                </p>
-              </div>
-            </div>
-          ))}
-
-          {offers.length === 0 && !loading && !error && (
-            <p className="text-sm text-slate-500">
-              No offers yet, submit a search.
-            </p>
-          )}
-        </div>
       </div>
     </main>
   );

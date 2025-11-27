@@ -132,10 +132,10 @@ model Slot {
   endTime       DateTime
   status        SlotStatus  @default(OPEN)
 
-  // Pricing - basePrice comes from Service
-  minPriceCents Int         // basePrice - maxDiscount
-  maxPriceCents Int         // basePrice (original price)
-  maxDiscount   Int         // Maximum discount provider is willing to offer (in cents)
+  // Pricing fields per slot spec
+  basePrice          Int              // Provider's standard rate in cents
+  maxDiscount        Decimal @db.Decimal(3, 2)  // Discount percentage (0.00 to 1.00)
+  maxDiscountedPrice Int              // Computed: basePrice * (1 - maxDiscount), in cents
 
   serviceId String
   service   Service  @relation(fields: [serviceId], references: [id])
@@ -175,8 +175,8 @@ model Negotiation {
   acceptedAt  DateTime?
   acceptedBy  AcceptedBy?
 
-  // Final price (set when status = ACCEPTED)
-  finalPriceCents Int?
+  // Final agreed price (set when status = ACCEPTED)
+  offerPriceCents Int?
 
   slot     Slot              @relation(fields: [slotId], references: [id])
   user     User              @relation(fields: [userId], references: [id])
