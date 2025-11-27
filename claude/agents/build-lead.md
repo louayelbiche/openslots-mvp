@@ -498,12 +498,12 @@ After every major or multi-file change, you must:
 
 ### Commit Message Format
 
-Every commit message must be complete and explicit. Format:
+Every commit message must be a comprehensive summary. Format:
 
 ```
 <commit-title>
 
-<commit-body>
+<summary-paragraph>
 
 🤖 Generated with [Claude Code](https://claude.com/claude-code)
 
@@ -512,39 +512,21 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 
 #### Commit Title
 - One-line imperative summary (50-72 characters)
-- Examples: "feat(api): add negotiation endpoints for bidding flow"
+- Format: `type(scope): brief description`
+- Examples:
+  - `feat(api): add negotiation endpoints for bidding flow`
+  - `fix(web): correct timezone handling in slot display`
+  - `chore(deps): update Prisma to v7`
 
-#### Commit Body (MANDATORY - No Truncation)
+#### Summary Paragraph (MANDATORY)
 
-The commit body must include ALL of the following:
+Write a concise 2-4 sentence summary that covers:
+- What files/areas changed
+- Why the change was made
+- Key implementation details if non-obvious
+- Spec/requirement reference if applicable
 
-1. **What Changed** - Complete list of all changes, no omissions:
-   - New files created
-   - Files modified and what changed
-   - Files deleted
-   - Categories: code, tests, docs, config, schema, etc.
-
-2. **Why Each Change Was Made** - Reason for each category:
-   - Link to specs or design docs if relevant
-   - User request or requirement
-   - Bug fix, feature addition, refactor, etc.
-
-3. **How It Was Implemented** - Implementation details:
-   - Key algorithms or logic changes
-   - Architectural decisions
-   - Integration points
-   - Dependencies added or updated
-
-4. **Spec/Design Alignment** - If applicable:
-   - Which specs were followed (e.g., "per bidding.md")
-   - Which design docs guided UI changes
-   - Any spec updates made
-
-5. **Follow-up Considerations** - If applicable:
-   - Known limitations or TODOs
-   - Future improvements planned
-   - Testing recommendations
-   - Open questions
+**Keep it brief but complete.** All detailed information (step-by-step changes, testing notes, debugging details, etc.) goes in the session history file, not the commit message.
 
 ### Commit Message Examples
 
@@ -553,40 +535,7 @@ The commit body must include ALL of the following:
 ```
 feat(mvp): implement negotiation and bidding flow
 
-What Changed:
-- Created apps/api/src/negotiation/ module with controller, service, DTOs
-- Added NegotiationModule to apps/api/src/app.module.ts
-- Created apps/web/src/app/negotiate/[id]/page.tsx for bidding UI
-- Updated apps/web/src/types/discovery.ts with Negotiation types
-- Added negotiation endpoints: POST /api/negotiation/create, POST /api/negotiation/offer
-- Created BiddingTimer component with 60-second countdown
-- Updated Prisma seed with test negotiation data
-
-Why:
-- Implements core bidding flow per claude/docs/specs/bidding.md
-- Enables consumer-provider price negotiation
-- Fulfills user request to complete bidding feature for MVP
-
-How Implemented:
-- 60-second bidding window enforced via setTimeout in service layer
-- 30-minute slot cutoff checked before allowing negotiation creation
-- Match likelihood calculation reused from discovery flow
-- Real-time countdown on frontend (client-side only, no WebSocket yet)
-- Negotiation state machine: PENDING → ACCEPTED/REJECTED/EXPIRED
-
-Spec Alignment:
-- Follows bidding.md: 60-second window, 30-min cutoff, 3-offer max
-- Follows booking.md: transitions from negotiation to booking on accept
-- UI follows design/negotiate-screen.md for layout and interactions
-
-Follow-up:
-- WebSocket integration deferred (post-MVP)
-- Server-side timer expiry needs background job (future)
-- E2E tests needed for full negotiation flow
-
-🤖 Generated with [Claude Code](https://claude.com/claude-code)
-
-Co-Authored-By: Claude <noreply@anthropic.com>
+Implemented full bidding flow with API endpoints (apps/api/src/negotiation/) and bidding UI page (apps/web/src/app/negotiate/). Uses 60-second bidding window with 30-minute slot cutoff per bidding.md spec. Includes BiddingTimer component with client-side countdown and negotiation state machine (PENDING → ACCEPTED/REJECTED/EXPIRED).
 ```
 
 **Example 2: Small Focused Change**
@@ -594,46 +543,16 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 ```
 fix(api): correct timezone conversion in slot filtering
 
-What Changed:
-- Updated apps/api/src/discovery/discovery.service.ts
-- Modified isSlotInTimeWindow() to accept city parameter
-- Added city-specific timezone offset logic
-
-Why:
-- Bug: Evening slots showing empty results for all cities
-- Root cause: timezone conversion not accounting for city
-- User reported "Failed to load offers" for Evening window
-
-How Implemented:
-- Added CITY_TIMEZONE_OFFSETS map (NYC: UTC-5, SF: UTC-8)
-- Convert UTC hour to local hour before time window check
-- Pass city from request through to filtering function
-
-Spec Alignment:
-- Per discovery.md: slots stored in UTC, filtered in local time
-- Timezone offsets match spec requirements
-
-🤖 Generated with [Claude Code](https://claude.com/claude-code)
-
-Co-Authored-By: Claude <noreply@anthropic.com>
+Fixed Evening time window showing empty results by adding city-specific timezone handling to isSlotInTimeWindow() in discovery.service.ts. Added CITY_TIMEZONE_OFFSETS map to convert slot times to city-local time before filtering.
 ```
 
 ### After Committing
 
 You must show the user:
 
-1. **Full commit title** (verbatim)
-2. **Full commit body** (never truncated or summarized)
-3. **Complete list of files changed** (from `git status`)
-4. **Confirmation message**: "Commit created. Ready to push when you're ready, or I can push if you instruct me to."
-
-### Small Changes
-
-For small changes (1-3 files, simple edits), you may write a shorter commit body, but it must still:
-- State what changed explicitly
-- Explain why
-- Include implementation notes if relevant
-- Never be vague or omit important details
+1. **Commit message** (title + summary)
+2. **List of files changed**
+3. **Confirmation**: "Committed. Ready to push when instructed."
 
 ### Tools and MCP Interaction
 
