@@ -30,10 +30,6 @@ Every commit message must be a comprehensive summary. Format:
 <commit-title>
 
 <summary-paragraph>
-
-🤖 Generated with [Claude Code](https://claude.com/claude-code)
-
-Co-Authored-By: Claude <noreply@anthropic.com>
 ```
 
 ### Commit Title
@@ -68,10 +64,6 @@ Write a concise 2-4 sentence summary that covers:
 feat(mvp): implement negotiation and bidding flow
 
 Implemented full bidding flow with API endpoints (apps/api/src/negotiation/) and bidding UI page (apps/web/src/app/negotiate/). Uses 60-second bidding window with 30-minute slot cutoff per bidding.md spec. Includes BiddingTimer component with client-side countdown and negotiation state machine (PENDING → ACCEPTED/REJECTED/EXPIRED).
-
-🤖 Generated with [Claude Code](https://claude.com/claude-code)
-
-Co-Authored-By: Claude <noreply@anthropic.com>
 ```
 
 ### Example 2: Small Focused Change
@@ -80,10 +72,6 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 fix(api): correct timezone conversion in slot filtering
 
 Fixed Evening time window showing empty results by adding city-specific timezone handling to isSlotInTimeWindow() in discovery.service.ts. Added CITY_TIMEZONE_OFFSETS map to convert slot times to city-local time before filtering.
-
-🤖 Generated with [Claude Code](https://claude.com/claude-code)
-
-Co-Authored-By: Claude <noreply@anthropic.com>
 ```
 
 ### Example 3: Configuration Change
@@ -92,10 +80,6 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 chore(web): add environment variable documentation for API URL
 
 Created apps/web/.env.example documenting NEXT_PUBLIC_API_BASE_URL and updated .gitignore to allow .env.example to be committed. Resolves audit warning about hardcoded API URL.
-
-🤖 Generated with [Claude Code](https://claude.com/claude-code)
-
-Co-Authored-By: Claude <noreply@anthropic.com>
 ```
 
 ---
