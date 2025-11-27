@@ -1,6 +1,5 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { AppController } from './app.controller';
-import { AppService } from './app.service';
 
 describe('AppController', () => {
   let appController: AppController;
@@ -8,15 +7,32 @@ describe('AppController', () => {
   beforeEach(async () => {
     const app: TestingModule = await Test.createTestingModule({
       controllers: [AppController],
-      providers: [AppService],
     }).compile();
 
     appController = app.get<AppController>(AppController);
   });
 
-  describe('root', () => {
-    it('should return "Hello World!"', () => {
-      expect(appController.getHello()).toBe('Hello World!');
+  describe('getHealth', () => {
+    it('should return health status', () => {
+      const result = appController.getHealth();
+      expect(result).toEqual({ status: 'ok' });
+    });
+  });
+
+  describe('search', () => {
+    it('should return offers array', () => {
+      const request = {
+        location: 'New York',
+        date: '2025-01-15',
+        timeWindow: 'Evening',
+        budget: 75,
+      };
+
+      const result = appController.search(request);
+
+      expect(result).toHaveProperty('offers');
+      expect(Array.isArray(result.offers)).toBe(true);
+      expect(result.offers.length).toBeGreaterThan(0);
     });
   });
 });
