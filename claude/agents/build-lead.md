@@ -484,87 +484,23 @@ If any of these conditions are not met, the task is not done.
 
 ---
 
-## 10. Git Operations and Commit Message Standards
+## 10. Git Operations
 
 You are solely responsible for all git operations in the repository.
 
-### Git Staging Rules
+**Complete git workflow rules are defined in:** `claude/policies/git-rules.md`
 
-After every major or multi-file change, you must:
+### Quick Reference
 
-1. **Stage all modified files**: `git add -A`
-2. **Never push** unless explicitly instructed by the user
-3. **Always commit** with a comprehensive message (see format below)
+After every major or multi-file change:
+1. Stage all files: `git add -A`
+2. Commit with comprehensive 2-4 sentence summary
+3. Show user: commit message + files changed + confirmation
+4. Never push unless explicitly instructed
 
-### Commit Message Format
+**Commit format:** `type(scope): description` with 2-4 sentence summary covering what changed, why, and key implementation details.
 
-Every commit message must be a comprehensive summary. Format:
-
-```
-<commit-title>
-
-<summary-paragraph>
-
-🤖 Generated with [Claude Code](https://claude.com/claude-code)
-
-Co-Authored-By: Claude <noreply@anthropic.com>
-```
-
-#### Commit Title
-- One-line imperative summary (50-72 characters)
-- Format: `type(scope): brief description`
-- Examples:
-  - `feat(api): add negotiation endpoints for bidding flow`
-  - `fix(web): correct timezone handling in slot display`
-  - `chore(deps): update Prisma to v7`
-
-#### Summary Paragraph (MANDATORY)
-
-Write a concise 2-4 sentence summary that covers:
-- What files/areas changed
-- Why the change was made
-- Key implementation details if non-obvious
-- Spec/requirement reference if applicable
-
-**Keep it brief but complete.** All detailed information (step-by-step changes, testing notes, debugging details, etc.) goes in the session history file, not the commit message.
-
-### Commit Message Examples
-
-**Example 1: Large Multi-Area Change**
-
-```
-feat(mvp): implement negotiation and bidding flow
-
-Implemented full bidding flow with API endpoints (apps/api/src/negotiation/) and bidding UI page (apps/web/src/app/negotiate/). Uses 60-second bidding window with 30-minute slot cutoff per bidding.md spec. Includes BiddingTimer component with client-side countdown and negotiation state machine (PENDING → ACCEPTED/REJECTED/EXPIRED).
-```
-
-**Example 2: Small Focused Change**
-
-```
-fix(api): correct timezone conversion in slot filtering
-
-Fixed Evening time window showing empty results by adding city-specific timezone handling to isSlotInTimeWindow() in discovery.service.ts. Added CITY_TIMEZONE_OFFSETS map to convert slot times to city-local time before filtering.
-```
-
-### After Committing
-
-You must show the user:
-
-1. **Commit message** (title + summary)
-2. **List of files changed**
-3. **Confirmation**: "Committed. Ready to push when instructed."
-
-### Tools and MCP Interaction
-
-When using filesystem tools:
-
-1. **Read before editing**: Always read files before modifying them
-2. **Keep edits focused**: Minimal diffs, no unrelated changes
-3. **Never**:
-   - Delete logical sections casually
-   - Introduce unrelated refactors in the same change
-   - Change deployment or infrastructure unless requested
-4. **Prefer**: Small, reviewable diffs with clear separation between logic and formatting
+Sub-agents never touch git. Only build-lead handles git operations.
 
 ---
 
