@@ -25,40 +25,103 @@ enum BookingStatus {
   CANCELLED
 }
 
+enum NegotiationStatus {
+  ACTIVE
+  ACCEPTED
+  EXPIRED
+  CANCELLED
+}
+
+enum OfferParty {
+  USER
+  PROVIDER
+}
+
+enum OfferStatus {
+  PENDING
+  COUNTERED
+  ACCEPTED
+  EXPIRED
+}
+
+enum AcceptedBy {
+  USER
+  PROVIDER
+}
+
+enum ServiceCategory {
+  MASSAGE
+  ACUPUNCTURE
+  NAILS
+  HAIR
+  FACIALS_AND_SKIN
+  LASHES_AND_BROWS
+}
+
 model User {
   id        String    @id @default(cuid())
   email     String    @unique
   name      String?
   role      UserRole  @default(CONSUMER)
+
+  // Profile completion fields (captured post-signup)
+  phone               String?
+  address             String?
+  addressLine2        String?
+  addressCity         String?
+  addressState        String?
+  addressZip          String?
+  profileCompleted    Boolean   @default(false)
+
+  // Browse context (persisted from index screen)
+  selectedCity        String?
+  selectedZipCode     String?
+  selectedCategory    ServiceCategory?
+
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
 
-  providers Provider[]
-  bookings  Booking[]
+  providers     Provider[]
+  bookings      Booking[]
+  negotiations  Negotiation[]
 }
 
 model Provider {
   id          String    @id @default(cuid())
   name        String
   description String?
-  location    String
+
+  // Physical address (shown in booking confirmation for directions)
+  address      String
+  addressLine2 String?
+  city         String
+  state        String
+  zipCode      String
+  latitude     Decimal?  @db.Decimal(10, 8)
+  longitude    Decimal?  @db.Decimal(11, 8)
+
+  // Rating and reviews
+  rating       Decimal?  @db.Decimal(3, 2)  // e.g., 4.85
+
   owner       User      @relation(fields: [ownerId], references: [id])
   ownerId     String
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
 
-  services Service[]
-  slots    Slot[]
+  services      Service[]
+  slots         Slot[]
+  negotiations  Negotiation[]
 }
 
 model Service {
-  id          String    @id @default(cuid())
+  id          String          @id @default(cuid())
   name        String
   description String?
+  category    ServiceCategory
   durationMin Int
-  basePrice   Int
+  basePrice   Int             // Base price in cents
   providerId  String
-  provider    Provider @relation(fields: [providerId], references: [id])
+  provider    Provider        @relation(fields: [providerId], references: [id])
 
   slots Slot[]
 }
@@ -68,8 +131,11 @@ model Slot {
   startTime     DateTime
   endTime       DateTime
   status        SlotStatus  @default(OPEN)
-  minPriceCents Int
-  maxPriceCents Int?
+
+  // Pricing - basePrice comes from Service
+  minPriceCents Int         // basePrice - maxDiscount
+  maxPriceCents Int         // basePrice (original price)
+  maxDiscount   Int         // Maximum discount provider is willing to offer (in cents)
 
   serviceId String
   service   Service  @relation(fields: [serviceId], references: [id])
@@ -77,18 +143,55 @@ model Slot {
   providerId String
   provider   Provider @relation(fields: [providerId], references: [id])
 
-  booking Booking?
+  booking       Booking?
+  negotiations  Negotiation[]
 }
 
 model Booking {
   id         String         @id @default(cuid())
   createdAt  DateTime       @default(now())
   status     BookingStatus  @default(PENDING)
-  priceCents Int
+  priceCents Int            // Final agreed price from negotiation
 
-  userId String
-  slotId String @unique
+  userId        String
+  slotId        String        @unique
+  negotiationId String?       @unique
 
-  user User @relation(fields: [userId], references: [id])
-  slot Slot @relation(fields: [slotId], references: [id])
+  user        User          @relation(fields: [userId], references: [id])
+  slot        Slot          @relation(fields: [slotId], references: [id])
+  negotiation Negotiation?  @relation(fields: [negotiationId], references: [id])
+}
+
+model Negotiation {
+  id          String            @id @default(cuid())
+  slotId      String
+  userId      String
+  providerId  String
+  status      NegotiationStatus @default(ACTIVE)
+
+  // Timing constraints
+  initiatedAt DateTime          @default(now())
+  expiresAt   DateTime          // Calculated: min(initiatedAt + 60sec, slot.startTime - 30min)
+  acceptedAt  DateTime?
+  acceptedBy  AcceptedBy?
+
+  // Final price (set when status = ACCEPTED)
+  finalPriceCents Int?
+
+  slot     Slot              @relation(fields: [slotId], references: [id])
+  user     User              @relation(fields: [userId], references: [id])
+  provider Provider          @relation(fields: [providerId], references: [id])
+  offers   NegotiationOffer[]
+  booking  Booking?
+}
+
+model NegotiationOffer {
+  id            String       @id @default(cuid())
+  negotiationId String
+  offeredBy     OfferParty   // USER or PROVIDER
+  priceCents    Int
+  createdAt     DateTime     @default(now())
+  status        OfferStatus  @default(PENDING)
+
+  negotiation Negotiation @relation(fields: [negotiationId], references: [id])
 }

@@ -1,0 +1,131 @@
+# Slot & Bidding Logic Reviewed
+Full review of slot structure, finalPrice logic, match likelihood calculation, and Best Offer computation.
+
+---
+
+## 1. Overview
+The slot and bidding systems were reviewed for:
+- determinism  
+- clarity  
+- strict rule adherence  
+- alignment with discovery, budget selector, and booking flows  
+- compliance with constraints and foundation principles
+
+Result: Logic is clean, deterministic, and ready for implementation.
+
+---
+
+## 2. Slot Review
+
+### 2.1 Slot Structure
+Each slot contains:
+- slotId  
+- providerId  
+- startTime  
+- endTime  
+- basePrice  
+- maxDiscount  
+- finalPrice  
+
+This structure is minimal, complete, and sufficient.
+
+### 2.2 Immutability
+Slots remain frozen once returned by discovery.  
+This is correct, prevents UI inconsistency, and aligns with specs.
+
+### 2.3 Time Window Alignment
+Slot filtering correctly excludes any slot whose startTime falls outside the chosen range.
+
+### 2.4 Ordering
+Slot lists sorted by:
+1. finalPrice  
+2. startTime  
+
+This is correct.
+
+---
+
+## 3. Bidding Review
+
+### 3.1 Offer Interaction
+User-adjusted offer interacts only with:
+- match likelihood  
+- provider ranking  
+
+Offer does NOT change:
+- finalPrice  
+- basePrice  
+- maxDiscount  
+
+Correct.
+
+### 3.2 Match Likelihood
+Match categories defined:
+- Very High (dark green)  
+- High (light green)  
+- Low (orange)  
+
+Rules:
+- Deterministic thresholds  
+- No red  
+- Stable across session  
+
+Correct and consistent.
+
+### 3.3 Match Score
+Internal (0–100) score drives sorting.  
+This is acceptable and consistent with design.
+
+---
+
+## 4. Best Offer Review
+
+### 4.1 Best Offer Rule
+Exactly ONE Best Offer across all providers.
+
+Definition:
+- slot with lowest finalPrice overall  
+- no ties  
+- no random selection  
+
+Correct and strictly enforced.
+
+### 4.2 Placement
+Must appear on:
+- provider card  
+- the actual slot row  
+
+Correct.
+
+---
+
+## 5. Sorting Priority Check
+Final provider ordering:
+1. Best Offer first  
+2. Highest match score  
+3. Closest distance  
+4. Highest rating  
+
+Matches foundation and constraints.
+
+---
+
+## 6. Issues Found
+Minor expectations:
+- Ensure deterministic threshold definitions exist in code comments  
+- Ensure no runtime adjustments to thresholds  
+
+No blockers.
+
+---
+
+## 7. Recommendations
+- Create a unit-test-friendly match likelihood calculator  
+- Add an internal-only debug log for match scoring  
+- Confirm that all distances return defined numeric values  
+
+---
+
+## 8. Final Assessment
+Slot and bidding logic is fully aligned with specs, deterministic, and clean.  
+Ready for Claude Code Opus implementation and multi-agent orchestration.
