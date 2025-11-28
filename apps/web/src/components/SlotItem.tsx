@@ -50,7 +50,7 @@ export function SlotItem({ slot, matchLikelihood, isBestOffer, onBid }: SlotItem
       <div className="flex items-center gap-3">
         <div className="text-right">
           <p className="text-lg font-bold text-slate-900">
-            ${slot.maxDiscountedPrice}
+            ${(slot.maxDiscountedPrice / 100).toFixed(slot.maxDiscountedPrice % 100 === 0 ? 0 : 2)}
           </p>
           <MatchBadge likelihood={matchLikelihood} size="sm" />
         </div>

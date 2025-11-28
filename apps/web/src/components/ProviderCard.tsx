@@ -84,7 +84,7 @@ export function ProviderCard({
           <div className="text-right">
             <MatchBadge likelihood={overallMatch} />
             <p className="text-sm text-slate-500 mt-1">
-              From <span className="font-semibold text-slate-900">${provider.lowestPrice}</span>
+              From <span className="font-semibold text-slate-900">${(provider.lowestPrice / 100).toFixed(provider.lowestPrice % 100 === 0 ? 0 : 2)}</span>
             </p>
           </div>
         </div>

@@ -307,13 +307,15 @@ async function main() {
         },
       });
 
-      // Create 3-5 slots per service using varied configurations
-      // Use modular selection to ensure variety
+      // Create 3-5 slots per service using stratified distribution
+      // Ensure each provider gets slots across Morning, Afternoon, and Evening time windows
       const slotsPerService = 3 + (providerIndex % 3); // 3, 4, or 5 slots
-      const startConfigIndex = (providerIndex * 3 + pData.services.indexOf(sData)) % slotConfigs.length;
+      const serviceIndex = pData.services.indexOf(sData);
 
       for (let i = 0; i < slotsPerService; i++) {
-        const configIndex = (startConfigIndex + i) % slotConfigs.length;
+        // Stratified round-robin: cycle through time windows for better distribution
+        // This ensures providers get slots from Morning (0-2), Afternoon (3-5), and Evening (6-9) ranges
+        const configIndex = (i * 3 + providerIndex + serviceIndex) % slotConfigs.length;
         const config = slotConfigs[configIndex];
 
         const baseDate = config.dayOffset === 0 ? today : tomorrow;

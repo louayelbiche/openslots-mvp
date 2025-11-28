@@ -1,0 +1,118 @@
+# USER ACCESSIBILITY TEST
+
+## 1. Context
+- **Screen/Flow:** Index → Budget → Offers (Discovery Flow)
+- **Entry Point/URL:** `http://localhost:3000/`
+- **User Goal:** Select a service, location, time, set budget, and view available provider offers
+- **Expected Behavior:** User should see matching providers with available slots for their selected criteria
+
+## 2. Observed Behavior
+- **Summary:** Discovery flow works for "Custom", "Morning", and "Afternoon" time windows, but "Evening" returns zero results despite valid slots existing in the database. Additionally, prices display in cents instead of dollars.
+- **Steps:**
+  1. Loaded Index page at `http://localhost:3000/`
+  2. Selected "Massage" service category
+  3. Entered "New York" as city
+  4. Selected "Evening" time window (4 PM - 8 PM)
+  5. Clicked "Find Availability" → navigated to `/budget`
+  6. Set budget to $75, clicked "See Live Offers"
+  7. **Result:** Empty state - "No available slots found"
+  8. Repeated with "Custom" time window → results appeared correctly
+- **Notable Details:**
+  - Database has 83 seeded slots across 8 providers
+  - API call `POST /api/discovery` with `timeWindow: "Evening"` returns `{"providers": []}`
+  - Same call with `timeWindow: "Custom"` returns multiple providers with slots
+
+## 3. Issues Found
+
+### Issue 1: Evening Time Window Returns No Results
+- **Type:** Behavior
+- **Severity:** High
+- **Expected:** Evening (4 PM - 8 PM local) should return slots scheduled during evening hours
+- **Actual:** Returns empty `{"providers": []}` for all Evening queries
+- **Impact on User:** Users cannot find evening appointments; appears as if no providers are available
+- **Likely Cause:** Timezone conversion bug in `isSlotInTimeWindow()` - the seed creates slots with UTC times calculated from local hours, but the filter's offset math doesn't correctly map UTC back to local hours for filtering
+- **Likely Files:**
+  - `apps/api/src/discovery/discovery.service.ts:143-169` (filtering logic)
+  - `apps/api/prisma/seed.ts:34-43` (slot time creation)
+
+### Issue 2: Prices Display in Cents Instead of Dollars
+- **Type:** Visual
+- **Severity:** High
+- **Expected:** Prices should display as "$75" (human-readable dollars)
+- **Actual:** API returns `lowestPrice: 7500` (cents), UI displays as "$7500"
+- **Impact on User:** Prices appear absurdly high ($7500 instead of $75); users will abandon immediately
+- **Likely Cause:** API returns prices in cents, frontend displays raw value without dividing by 100
+- **Likely Files:**
+  - `apps/web/src/components/ProviderCard.tsx:87` (lowestPrice display)
+  - `apps/web/src/components/SlotItem.tsx` (slot price display)
+
+### Issue 3: Bid Button Shows Placeholder Alert
+- **Type:** Behavior
+- **Severity:** Medium
+- **Expected:** Tapping "Bid" should initiate negotiation with confirmation dialog per spec
+- **Actual:** Shows JavaScript alert: "Negotiation feature coming soon!"
+- **Impact on User:** Dead-end in user flow; cannot complete booking
+- **Likely Cause:** MVP placeholder not yet implemented
+- **Likely Files:** `apps/web/src/app/offers/page.tsx:169-173`
+
+### Issue 4: Zip Code Not Required (Spec Deviation)
+- **Type:** Behavior
+- **Severity:** Low
+- **Expected:** Per `index-screen.md` Section 2.3: "Both fields required before continuing"
+- **Actual:** Zip code is optional; form submits with city only
+- **Impact on User:** Minor - may affect location accuracy
+- **Likely Cause:** Intentional simplification for MVP
+- **Likely Files:** `apps/web/src/app/page.tsx:41`
+
+## 4. Recommended Changes by Agent
+
+### For api-impl:
+#### Change 1: Fix timezone conversion in time window filtering
+- **Files:** `apps/api/src/discovery/discovery.service.ts`
+- **Description:** The `isSlotInTimeWindow()` function at line 143 has incorrect timezone math. The seed stores slots as UTC (after converting from local time), but the filter incorrectly applies the offset. Need to verify the conversion logic matches the seed's slot creation logic.
+- **Acceptance Criteria:**
+  - [ ] `POST /api/discovery` with `timeWindow: "Evening"` and `city: "New York"` returns providers with slots between 4-8pm EST
+  - [ ] All time windows (Morning, Afternoon, Evening, Custom) filter correctly
+  - [ ] Add unit test in `discovery.service.spec.ts` for each time window with known slot times
+
+### For ui-impl:
+#### Change 1: Convert prices from cents to dollars in display
+- **Files:**
+  - `apps/web/src/components/ProviderCard.tsx`
+  - `apps/web/src/components/SlotItem.tsx`
+- **Description:** Divide `lowestPrice` and `maxDiscountedPrice` by 100 before displaying. Format as currency with 2 decimal places or whole dollars.
+- **Acceptance Criteria:**
+  - [ ] Provider card shows "From $75" not "From $7500" for a slot priced at 7500 cents
+  - [ ] Slot prices display correctly (e.g., "$75.00" or "$75")
+  - [ ] Budget selector range ($30-$200) aligns with actual displayed prices
+
+#### Change 2: Implement basic bid confirmation (optional for MVP)
+- **Files:** `apps/web/src/app/offers/page.tsx`
+- **Description:** Replace alert with confirmation dialog per live-offers.md Section 3.3
+- **Acceptance Criteria:**
+  - [ ] Tapping "Bid" shows confirmation: "Submit bid of $X for [Time]?"
+  - [ ] Confirm triggers next step (even if just success message for MVP)
+  - [ ] Cancel returns to Live Offers
+
+## 5. Accessibility & Usability Notes
+- **Keyboard Navigation:** Good - all interactive elements reachable via Tab
+- **Focus Indicators:** Present on service cards, time buttons, form inputs
+- **Empty/Error States:** Empty state message exists but is misleading when Evening bug occurs
+- **Content Clarity:** Helper text explains missing fields; error states use orange (not red) per spec
+- **Mobile Behavior:** Not tested in this session
+
+## 6. Open Questions / Uncertainties
+- Is the timezone logic in seed.ts correct, or is the bug in the service filter?
+- Should prices be converted in API response or in frontend display components?
+- Is the bid placeholder acceptable for MVP launch, or is basic confirmation required?
+
+## 7. Impact & Priority
+- **Overall Impact:** High
+- **Recommended Priority:** P1 (critical)
+- **Justification:** Two blocking issues: (1) Evening time window completely broken - users see empty results for most popular booking time, (2) Price display shows $7500 instead of $75 - immediate user abandonment. Both must be fixed before any user testing.
+
+---
+
+**Test Date:** 2025-11-28
+**Tester:** ua-tester agent
+**Test Environment:** localhost:3000 (web), localhost:3001 (api)
