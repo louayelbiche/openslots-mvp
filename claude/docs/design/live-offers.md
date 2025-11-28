@@ -43,23 +43,31 @@ Vertical list of provider cards, sorted by:
 │ **BEST OFFER** (badge, if applicable)│
 │                                      │
 │ Zen Flow Massage ★ 4.85              │
-│ 2.3 miles • Massage                  │
+│ 2.3 miles                            │
 │                                      │
 │ [High Match] (colored badge)         │
-│                                      │
 │ From $70 (lowest slot price)         │
 │                                      │
-│ Available Slots:                     │
+│ Select Time Slot:                    │
 │ ┌─────────────────────────────────┐ │
-│ │ 5:00 PM - 6:00 PM  $75  [Bid] │ │
+│ │ ▼ 6:30 PM - 7:30 PM • $70 • Best│ │  ← Dropdown, best slot pre-selected
 │ └─────────────────────────────────┘ │
+│                                      │
 │ ┌─────────────────────────────────┐ │
-│ │ 6:30 PM - 7:30 PM  $70  [Bid] │ │  ← Best Offer slot
-│ └─────────────────────────────────┘ │
-│ ┌─────────────────────────────────┐ │
-│ │ 8:00 PM - 9:00 PM  $80  [Bid] │ │
+│ │ Deep Tissue   60 min     $70    │ │
+│ │ [Best Offer]          [Bid →]   │ │
 │ └─────────────────────────────────┘ │
 └─────────────────────────────────────┘
+
+**Dropdown options format:**
+- Time range • Price • "Best Offer" label (if applicable)
+- Example: "5:00 PM - 6:00 PM • $75"
+- Example: "6:30 PM - 7:30 PM • $70 • Best Offer"
+
+**Slot filtering:**
+- Only slots within the selected time window are shown
+- Providers with no slots in the time window are hidden
+- Best offer is calculated only from slots within the time window
 
 ### 2.3 Best Offer Badge (Provider Level)
 
@@ -206,24 +214,31 @@ If no providers match criteria:
 - Gold/yellow border or glow effect (optional)
 - Badge clearly visible at top
 
-### 4.2 Slot Item Design
+### 4.2 Slot Selection Design
 
-**Each slot within provider card:**
+**Dropdown selector:**
+- Full-width dropdown within provider card
+- Shows: Time range • Price • "Best Offer" label
+- Pre-selects the best offer slot (closest to user bid)
+- Native select element with custom styling
+
+**Selected slot details panel:**
 ```
 ┌──────────────────────────────────┐
-│ 5:00 PM - 6:00 PM       [$75]   │
-│ 60 minutes              [Bid →] │
+│ Deep Tissue    [Best Offer]     │
+│ 60 min                   $70    │
+│                        [Bid →]  │
 └──────────────────────────────────┘
 ```
 
-- Time: Left-aligned, medium weight
-- Duration: Small text below time
+- Service name: Left-aligned, medium weight
+- Duration: Small text below service name
 - Price: Right-aligned, bold
-- Action button: "Bid" or "Make Offer" (8-10px padding)
+- Action button: "Bid" (prominent, primary color)
 
 **Best Offer slot:**
-- Gold star or "Best" badge next to price
-- Slightly highlighted background (light yellow tint)
+- "Best Offer" pill badge next to service name
+- Highlighted in dropdown with "Best Offer" suffix
 
 ### 4.3 Color Palette
 

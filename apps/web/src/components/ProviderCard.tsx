@@ -1,14 +1,24 @@
 'use client';
 
-import type { Provider, Slot, MatchLikelihood } from '../types/discovery';
+import { useState, useEffect } from 'react';
+import type { Provider, Slot, MatchLikelihood, TimeWindow } from '../types/discovery';
 import { MatchBadge, calculateMatchLikelihood } from './MatchBadge';
-import { SlotItem } from './SlotItem';
+import { SlotDropdown } from './SlotDropdown';
+
+// Time window hour ranges
+const TIME_WINDOW_RANGES: Record<TimeWindow, { start: number; end: number }> = {
+  Morning: { start: 9, end: 12 },
+  Afternoon: { start: 12, end: 16 },
+  Evening: { start: 16, end: 20 },
+  Custom: { start: 0, end: 24 },
+};
 
 interface ProviderCardProps {
   provider: Provider;
   userBid: number;
   isBestOfferProvider: boolean;
   bestOfferSlotId: string | null;
+  timeWindow: TimeWindow;
   onBid?: (slotId: string, providerId: string) => void;
 }
 
@@ -27,20 +37,77 @@ function getProviderMatchLikelihood(slots: Slot[], userBid: number): MatchLikeli
   return 'Very Low';
 }
 
+// Filter slots to only those within the selected time window
+function filterSlotsByTimeWindow(slots: Slot[], timeWindow: TimeWindow): Slot[] {
+  const range = TIME_WINDOW_RANGES[timeWindow];
+  return slots.filter((slot) => {
+    const slotHour = new Date(slot.startTime).getHours();
+    return slotHour >= range.start && slotHour < range.end;
+  });
+}
+
+// Find the best offer slot among filtered slots
+function findBestOfferInSlots(slots: Slot[], userBid: number): string | null {
+  if (slots.length === 0) return null;
+
+  let bestSlot = slots[0];
+  let bestDiff = Math.abs(slots[0].maxDiscountedPrice - userBid);
+
+  for (const slot of slots) {
+    const diff = Math.abs(slot.maxDiscountedPrice - userBid);
+    if (diff < bestDiff || (diff === bestDiff && slot.maxDiscountedPrice < bestSlot.maxDiscountedPrice)) {
+      bestSlot = slot;
+      bestDiff = diff;
+    }
+  }
+
+  return bestSlot.slotId;
+}
+
 export function ProviderCard({
   provider,
   userBid,
   isBestOfferProvider,
   bestOfferSlotId,
+  timeWindow,
   onBid,
 }: ProviderCardProps) {
-  const overallMatch = getProviderMatchLikelihood(provider.slots, userBid);
+  // Filter slots by time window
+  const filteredSlots = filterSlotsByTimeWindow(provider.slots, timeWindow);
+
+  // Find the best offer among filtered slots for this provider
+  const localBestOfferSlotId = findBestOfferInSlots(filteredSlots, userBid);
+
+  // Use the global best offer slot if it's in this provider, otherwise use local best
+  const effectiveBestOfferSlotId = filteredSlots.some(s => s.slotId === bestOfferSlotId)
+    ? bestOfferSlotId
+    : localBestOfferSlotId;
+
+  // Pre-select the best offer slot
+  const [selectedSlotId, setSelectedSlotId] = useState<string | null>(effectiveBestOfferSlotId);
+
+  // Update selection if best offer changes
+  useEffect(() => {
+    if (effectiveBestOfferSlotId && !selectedSlotId) {
+      setSelectedSlotId(effectiveBestOfferSlotId);
+    }
+  }, [effectiveBestOfferSlotId, selectedSlotId]);
+
+  const overallMatch = getProviderMatchLikelihood(filteredSlots, userBid);
 
   const handleBid = (slotId: string) => {
     if (onBid) {
       onBid(slotId, provider.providerId);
     }
   };
+
+  // Don't render if no slots in time window
+  if (filteredSlots.length === 0) {
+    return null;
+  }
+
+  // Calculate lowest price from filtered slots
+  const lowestFilteredPrice = Math.min(...filteredSlots.map(s => s.maxDiscountedPrice));
 
   return (
     <article
@@ -84,28 +151,24 @@ export function ProviderCard({
           <div className="text-right">
             <MatchBadge likelihood={overallMatch} />
             <p className="text-sm text-slate-500 mt-1">
-              From <span className="font-semibold text-slate-900">${(provider.lowestPrice / 100).toFixed(provider.lowestPrice % 100 === 0 ? 0 : 2)}</span>
+              From <span className="font-semibold text-slate-900">${(lowestFilteredPrice / 100).toFixed(lowestFilteredPrice % 100 === 0 ? 0 : 2)}</span>
             </p>
           </div>
         </div>
       </div>
 
-      {/* Slots List */}
+      {/* Slot Dropdown */}
       <div className="p-4">
         <h4 className="text-xs font-semibold text-slate-500 uppercase mb-3">
-          Available Slots
+          Select Time Slot
         </h4>
-        <div className="space-y-2">
-          {provider.slots.map((slot) => (
-            <SlotItem
-              key={slot.slotId}
-              slot={slot}
-              matchLikelihood={calculateMatchLikelihood(userBid, slot.maxDiscountedPrice)}
-              isBestOffer={slot.slotId === bestOfferSlotId}
-              onBid={handleBid}
-            />
-          ))}
-        </div>
+        <SlotDropdown
+          slots={filteredSlots}
+          bestOfferSlotId={effectiveBestOfferSlotId}
+          selectedSlotId={selectedSlotId}
+          onSelect={setSelectedSlotId}
+          onBid={handleBid}
+        />
       </div>
     </article>
   );

@@ -33,25 +33,42 @@ const TIME_WINDOW_LABELS: Record<TimeWindow, string> = {
   Custom: 'Any Time',
 };
 
-// Find the Best Offer slot (closest price to user bid)
+// Time window hour ranges
+const TIME_WINDOW_RANGES: Record<TimeWindow, { start: number; end: number }> = {
+  Morning: { start: 9, end: 12 },
+  Afternoon: { start: 12, end: 16 },
+  Evening: { start: 16, end: 20 },
+  Custom: { start: 0, end: 24 },
+};
+
+// Filter slots by time window
+function filterSlotsByTimeWindow(slots: Slot[], timeWindow: TimeWindow): Slot[] {
+  const range = TIME_WINDOW_RANGES[timeWindow];
+  return slots.filter((slot) => {
+    const slotHour = new Date(slot.startTime).getHours();
+    return slotHour >= range.start && slotHour < range.end;
+  });
+}
+
+// Find the Best Offer slot (closest price to user bid) - only within time window
 function findBestOffer(
   providers: Provider[],
-  userBid: number
+  userBid: number,
+  timeWindow: TimeWindow
 ): { providerId: string; slotId: string } | null {
-  let bestSlot: { providerId: string; slotId: string; diff: number } | null = null;
+  let bestSlot: { providerId: string; slotId: string; diff: number; price: number } | null = null;
 
   for (const provider of providers) {
-    for (const slot of provider.slots) {
+    const filteredSlots = filterSlotsByTimeWindow(provider.slots, timeWindow);
+    for (const slot of filteredSlots) {
       const diff = Math.abs(slot.maxDiscountedPrice - userBid);
 
       if (
         bestSlot === null ||
         diff < bestSlot.diff ||
-        (diff === bestSlot.diff && slot.maxDiscountedPrice < (providers
-          .find(p => p.providerId === bestSlot!.providerId)
-          ?.slots.find(s => s.slotId === bestSlot!.slotId)?.maxDiscountedPrice ?? Infinity))
+        (diff === bestSlot.diff && slot.maxDiscountedPrice < bestSlot.price)
       ) {
-        bestSlot = { providerId: provider.providerId, slotId: slot.slotId, diff };
+        bestSlot = { providerId: provider.providerId, slotId: slot.slotId, diff, price: slot.maxDiscountedPrice };
       }
     }
   }
@@ -159,8 +176,8 @@ function LiveOffersContent() {
     fetchProviders();
   }, [fetchProviders]);
 
-  // Calculate best offer
-  const bestOffer = findBestOffer(providers, userBid);
+  // Calculate best offer (only within time window)
+  const bestOffer = timeWindow ? findBestOffer(providers, userBid, timeWindow) : null;
 
   // Sort providers
   const sortedProviders = sortProviders(providers, userBid, bestOffer?.providerId || null);
@@ -294,6 +311,7 @@ function LiveOffersContent() {
                 bestOfferSlotId={
                   provider.providerId === bestOffer?.providerId ? bestOffer.slotId : null
                 }
+                timeWindow={timeWindow}
                 onBid={handleBid}
               />
             ))}

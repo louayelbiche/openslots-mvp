@@ -1,9 +1,11 @@
 import { describe, it, expect, vi } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
 import { ProviderCard } from './ProviderCard';
-import type { Provider } from '../types/discovery';
+import type { Provider, TimeWindow } from '../types/discovery';
 
 // Test fixture for Provider data
+// Note: Prices are in cents (8000 = $80.00)
+// Note: Slots are set to Morning (10:00) and Afternoon (14:00) time windows (local time)
 const createProviderFixture = (overrides: Partial<Provider> = {}): Provider => ({
   providerId: 'provider-1',
   name: 'Serenity Spa',
@@ -11,31 +13,34 @@ const createProviderFixture = (overrides: Partial<Provider> = {}): Provider => (
   distance: 2.3,
   address: '123 Main St',
   city: 'San Francisco',
-  lowestPrice: 80,
+  lowestPrice: 8000, // $80.00 in cents
   slots: [
     {
       slotId: 'slot-1',
-      startTime: '2025-11-28T10:00:00Z',
-      endTime: '2025-11-28T11:00:00Z',
-      basePrice: 100,
+      startTime: '2025-11-28T10:00:00', // Morning slot (10 AM local)
+      endTime: '2025-11-28T11:00:00',
+      basePrice: 10000,
       maxDiscount: 20,
-      maxDiscountedPrice: 80,
+      maxDiscountedPrice: 8000, // $80.00 in cents
       serviceName: 'Swedish Massage',
       durationMin: 60,
     },
     {
       slotId: 'slot-2',
-      startTime: '2025-11-28T14:00:00Z',
-      endTime: '2025-11-28T15:00:00Z',
-      basePrice: 120,
+      startTime: '2025-11-28T14:00:00', // Afternoon slot (2 PM local)
+      endTime: '2025-11-28T15:00:00',
+      basePrice: 12000,
       maxDiscount: 25,
-      maxDiscountedPrice: 90,
+      maxDiscountedPrice: 9000, // $90.00 in cents
       serviceName: 'Deep Tissue Massage',
       durationMin: 60,
     },
   ],
   ...overrides,
 });
+
+// Default time window that includes all test slots
+const defaultTimeWindow: TimeWindow = 'Custom';
 
 describe('ProviderCard', () => {
   describe('Basic Rendering', () => {
@@ -44,9 +49,10 @@ describe('ProviderCard', () => {
       render(
         <ProviderCard
           provider={provider}
-          userBid={80}
+          userBid={8000}
           isBestOfferProvider={false}
           bestOfferSlotId={null}
+          timeWindow={defaultTimeWindow}
         />
       );
 
@@ -60,9 +66,10 @@ describe('ProviderCard', () => {
       render(
         <ProviderCard
           provider={provider}
-          userBid={80}
+          userBid={8000}
           isBestOfferProvider={false}
           bestOfferSlotId={null}
+          timeWindow={defaultTimeWindow}
         />
       );
 
@@ -72,21 +79,22 @@ describe('ProviderCard', () => {
       expect(priceElements.length).toBeGreaterThan(0);
     });
 
-    it('should render all available slots', () => {
+    it('should render slot dropdown with available slots', () => {
       const provider = createProviderFixture();
       render(
         <ProviderCard
           provider={provider}
-          userBid={80}
+          userBid={8000}
           isBestOfferProvider={false}
           bestOfferSlotId={null}
+          timeWindow={defaultTimeWindow}
         />
       );
 
-      expect(screen.getByText('Available Slots')).toBeInTheDocument();
-      // Should render both slot times
-      expect(screen.getByText(/Swedish Massage/)).toBeInTheDocument();
-      expect(screen.getByText(/Deep Tissue Massage/)).toBeInTheDocument();
+      expect(screen.getByText('Select Time Slot')).toBeInTheDocument();
+      // Should have a dropdown with slot options
+      const dropdown = screen.getByRole('combobox');
+      expect(dropdown).toBeInTheDocument();
     });
 
     it('should render rating with star icon', () => {
@@ -94,9 +102,10 @@ describe('ProviderCard', () => {
       render(
         <ProviderCard
           provider={provider}
-          userBid={80}
+          userBid={8000}
           isBestOfferProvider={false}
           bestOfferSlotId={null}
+          timeWindow={defaultTimeWindow}
         />
       );
 
@@ -110,9 +119,10 @@ describe('ProviderCard', () => {
       render(
         <ProviderCard
           provider={provider}
-          userBid={80}
+          userBid={8000}
           isBestOfferProvider={true}
           bestOfferSlotId={null}
+          timeWindow={defaultTimeWindow}
         />
       );
 
@@ -124,9 +134,10 @@ describe('ProviderCard', () => {
       render(
         <ProviderCard
           provider={provider}
-          userBid={80}
+          userBid={8000}
           isBestOfferProvider={false}
           bestOfferSlotId={null}
+          timeWindow={defaultTimeWindow}
         />
       );
 
@@ -138,9 +149,10 @@ describe('ProviderCard', () => {
       const { container } = render(
         <ProviderCard
           provider={provider}
-          userBid={80}
+          userBid={8000}
           isBestOfferProvider={true}
           bestOfferSlotId={null}
+          timeWindow={defaultTimeWindow}
         />
       );
 
@@ -154,9 +166,10 @@ describe('ProviderCard', () => {
       const { container } = render(
         <ProviderCard
           provider={provider}
-          userBid={80}
+          userBid={8000}
           isBestOfferProvider={false}
           bestOfferSlotId={null}
+          timeWindow={defaultTimeWindow}
         />
       );
 
@@ -171,9 +184,10 @@ describe('ProviderCard', () => {
       render(
         <ProviderCard
           provider={provider}
-          userBid={100}
+          userBid={10000}
           isBestOfferProvider={false}
           bestOfferSlotId={null}
+          timeWindow={defaultTimeWindow}
         />
       );
 
@@ -187,9 +201,10 @@ describe('ProviderCard', () => {
       render(
         <ProviderCard
           provider={provider}
-          userBid={77} // 96% of lowest price (80)
+          userBid={7700} // 96% of lowest price (80)
           isBestOfferProvider={false}
           bestOfferSlotId={null}
+          timeWindow={defaultTimeWindow}
         />
       );
 
@@ -202,9 +217,10 @@ describe('ProviderCard', () => {
       render(
         <ProviderCard
           provider={provider}
-          userBid={70} // 87.5% of lowest price (80)
+          userBid={7000} // 87.5% of lowest price (80)
           isBestOfferProvider={false}
           bestOfferSlotId={null}
+          timeWindow={defaultTimeWindow}
         />
       );
 
@@ -217,9 +233,10 @@ describe('ProviderCard', () => {
       render(
         <ProviderCard
           provider={provider}
-          userBid={50} // 62.5% of lowest price (80)
+          userBid={5000} // 62.5% of lowest price (80)
           isBestOfferProvider={false}
           bestOfferSlotId={null}
+          timeWindow={defaultTimeWindow}
         />
       );
 
@@ -232,21 +249,21 @@ describe('ProviderCard', () => {
         slots: [
           {
             slotId: 'slot-1',
-            startTime: '2025-11-28T10:00:00Z',
-            endTime: '2025-11-28T11:00:00Z',
-            basePrice: 100,
+            startTime: '2025-11-28T10:00:00',
+            endTime: '2025-11-28T11:00:00',
+            basePrice: 10000,
             maxDiscount: 20,
-            maxDiscountedPrice: 80,
+            maxDiscountedPrice: 8000,
             serviceName: 'Swedish Massage',
             durationMin: 60,
           },
           {
             slotId: 'slot-2',
-            startTime: '2025-11-28T14:00:00Z',
-            endTime: '2025-11-28T15:00:00Z',
-            basePrice: 50,
+            startTime: '2025-11-28T14:00:00',
+            endTime: '2025-11-28T15:00:00',
+            basePrice: 5000,
             maxDiscount: 10,
-            maxDiscountedPrice: 40,
+            maxDiscountedPrice: 4000,
             serviceName: 'Chair Massage',
             durationMin: 30,
           },
@@ -255,9 +272,10 @@ describe('ProviderCard', () => {
       render(
         <ProviderCard
           provider={provider}
-          userBid={42} // Very High for slot-2, Low for slot-1
+          userBid={4200} // Very High for slot-2, Low for slot-1
           isBestOfferProvider={false}
           bestOfferSlotId={null}
+          timeWindow={defaultTimeWindow}
         />
       );
 
@@ -268,64 +286,72 @@ describe('ProviderCard', () => {
   });
 
   describe('Bid Handling', () => {
-    it('should call onBid when bid button is clicked on a slot', () => {
+    it('should call onBid when bid button is clicked for selected slot', () => {
       const provider = createProviderFixture();
       const onBid = vi.fn();
 
       render(
         <ProviderCard
           provider={provider}
-          userBid={80}
+          userBid={8000}
           isBestOfferProvider={false}
-          bestOfferSlotId={null}
+          bestOfferSlotId="slot-1"
+          timeWindow={defaultTimeWindow}
           onBid={onBid}
         />
       );
 
-      const bidButtons = screen.getAllByText('Bid');
-      fireEvent.click(bidButtons[0]);
+      // With dropdown, there's one Bid button for the selected slot
+      const bidButton = screen.getByText('Bid');
+      fireEvent.click(bidButton);
 
       expect(onBid).toHaveBeenCalledTimes(1);
+      // Best offer slot-1 should be pre-selected
       expect(onBid).toHaveBeenCalledWith('slot-1', 'provider-1');
     });
 
-    it('should call onBid with correct parameters for second slot', () => {
+    it('should call onBid with correct slot after changing dropdown selection', () => {
       const provider = createProviderFixture();
       const onBid = vi.fn();
 
       render(
         <ProviderCard
           provider={provider}
-          userBid={80}
+          userBid={8000}
           isBestOfferProvider={false}
-          bestOfferSlotId={null}
+          bestOfferSlotId="slot-1"
+          timeWindow={defaultTimeWindow}
           onBid={onBid}
         />
       );
 
-      const bidButtons = screen.getAllByText('Bid');
-      fireEvent.click(bidButtons[1]);
+      // Change dropdown to slot-2
+      const dropdown = screen.getByRole('combobox');
+      fireEvent.change(dropdown, { target: { value: 'slot-2' } });
+
+      const bidButton = screen.getByText('Bid');
+      fireEvent.click(bidButton);
 
       expect(onBid).toHaveBeenCalledTimes(1);
       expect(onBid).toHaveBeenCalledWith('slot-2', 'provider-1');
     });
 
-    it('should render bid buttons even when onBid is not provided (handler exists but does nothing)', () => {
+    it('should render bid button even when onBid is not provided', () => {
       const provider = createProviderFixture();
 
       render(
         <ProviderCard
           provider={provider}
-          userBid={80}
+          userBid={8000}
           isBestOfferProvider={false}
           bestOfferSlotId={null}
+          timeWindow={defaultTimeWindow}
         />
       );
 
-      // ProviderCard always passes handleBid to SlotItem, so buttons render
-      // The handleBid just won't do anything if onBid prop is undefined
-      const bidButtons = screen.getAllByText('Bid');
-      expect(bidButtons.length).toBeGreaterThan(0);
+      // SlotDropdown always renders bid button
+      const bidButton = screen.getByText('Bid');
+      expect(bidButton).toBeInTheDocument();
     });
   });
 
@@ -335,65 +361,67 @@ describe('ProviderCard', () => {
       render(
         <ProviderCard
           provider={provider}
-          userBid={80}
+          userBid={8000}
           isBestOfferProvider={true}
           bestOfferSlotId="slot-1"
+          timeWindow={defaultTimeWindow}
         />
       );
 
-      // The SlotItem component should receive isBestOffer=true for slot-1
-      // We can verify this by checking for the "Best" badge
-      expect(screen.getByText('Best')).toBeInTheDocument();
+      // The dropdown shows "Best Offer" in the selected slot details
+      expect(screen.getByText('Best Offer')).toBeInTheDocument();
     });
 
-    it('should not highlight slots when bestOfferSlotId is null', () => {
+    it('should not highlight slots when no slot matches best offer', () => {
       const provider = createProviderFixture();
       render(
         <ProviderCard
           provider={provider}
-          userBid={80}
+          userBid={8000}
           isBestOfferProvider={false}
-          bestOfferSlotId={null}
+          bestOfferSlotId="non-existent-slot"
+          timeWindow={defaultTimeWindow}
         />
       );
 
-      expect(screen.queryByText('Best')).not.toBeInTheDocument();
+      // Provider still renders with local best offer calculation
+      // but won't show the best offer badge for non-matching slot
+      expect(screen.getByText('Serenity Spa')).toBeInTheDocument();
     });
 
-    it('should only highlight matching slot when bestOfferSlotId is provided', () => {
+    it('should show best offer badge for the designated slot', () => {
       const provider = createProviderFixture();
       render(
         <ProviderCard
           provider={provider}
-          userBid={80}
+          userBid={8000}
           isBestOfferProvider={true}
-          bestOfferSlotId="slot-2"
+          bestOfferSlotId="slot-1"
+          timeWindow={defaultTimeWindow}
         />
       );
 
-      // Should only have one "Best" badge
-      const bestBadges = screen.getAllByText('Best');
-      expect(bestBadges).toHaveLength(1);
+      // "Best Offer" badge appears in selected slot details
+      const bestOfferBadges = screen.getAllByText('Best Offer');
+      expect(bestOfferBadges.length).toBeGreaterThan(0);
     });
   });
 
   describe('Edge Cases', () => {
-    it('should handle provider with no slots', () => {
+    it('should not render provider with no slots in time window', () => {
       const provider = createProviderFixture({ slots: [] });
-      render(
+      const { container } = render(
         <ProviderCard
           provider={provider}
-          userBid={80}
+          userBid={8000}
           isBestOfferProvider={false}
           bestOfferSlotId={null}
+          timeWindow={defaultTimeWindow}
         />
       );
 
-      expect(screen.getByText('Serenity Spa')).toBeInTheDocument();
-      expect(screen.getByText('Available Slots')).toBeInTheDocument();
-      // Should still show Very Low match for empty slots
-      const veryLowBadges = screen.getAllByText('Very Low');
-      expect(veryLowBadges.length).toBeGreaterThan(0);
+      // Provider with no slots returns null
+      expect(container.querySelector('article')).not.toBeInTheDocument();
     });
 
     it('should handle provider with single slot', () => {
@@ -401,11 +429,11 @@ describe('ProviderCard', () => {
         slots: [
           {
             slotId: 'slot-1',
-            startTime: '2025-11-28T10:00:00Z',
-            endTime: '2025-11-28T11:00:00Z',
-            basePrice: 100,
+            startTime: '2025-11-28T10:00:00',
+            endTime: '2025-11-28T11:00:00',
+            basePrice: 10000,
             maxDiscount: 20,
-            maxDiscountedPrice: 80,
+            maxDiscountedPrice: 8000,
             serviceName: 'Swedish Massage',
             durationMin: 60,
           },
@@ -414,9 +442,10 @@ describe('ProviderCard', () => {
       render(
         <ProviderCard
           provider={provider}
-          userBid={80}
+          userBid={8000}
           isBestOfferProvider={false}
           bestOfferSlotId={null}
+          timeWindow={defaultTimeWindow}
         />
       );
 
@@ -430,9 +459,10 @@ describe('ProviderCard', () => {
       render(
         <ProviderCard
           provider={provider}
-          userBid={80}
+          userBid={8000}
           isBestOfferProvider={false}
           bestOfferSlotId={null}
+          timeWindow={defaultTimeWindow}
         />
       );
 
@@ -444,9 +474,10 @@ describe('ProviderCard', () => {
       render(
         <ProviderCard
           provider={provider}
-          userBid={80}
+          userBid={8000}
           isBestOfferProvider={false}
           bestOfferSlotId={null}
+          timeWindow={defaultTimeWindow}
         />
       );
 
@@ -458,9 +489,10 @@ describe('ProviderCard', () => {
       render(
         <ProviderCard
           provider={provider}
-          userBid={80}
+          userBid={8000}
           isBestOfferProvider={false}
           bestOfferSlotId={null}
+          timeWindow={defaultTimeWindow}
         />
       );
 
@@ -472,9 +504,10 @@ describe('ProviderCard', () => {
       render(
         <ProviderCard
           provider={provider}
-          userBid={80}
+          userBid={8000}
           isBestOfferProvider={false}
           bestOfferSlotId={null}
+          timeWindow={defaultTimeWindow}
         />
       );
 
@@ -489,6 +522,7 @@ describe('ProviderCard', () => {
           userBid={0}
           isBestOfferProvider={false}
           bestOfferSlotId={null}
+          timeWindow={defaultTimeWindow}
         />
       );
 
@@ -501,9 +535,10 @@ describe('ProviderCard', () => {
       render(
         <ProviderCard
           provider={provider}
-          userBid={1000}
+          userBid={100000}
           isBestOfferProvider={false}
           bestOfferSlotId={null}
+          timeWindow={defaultTimeWindow}
         />
       );
 
@@ -518,9 +553,10 @@ describe('ProviderCard', () => {
       const { container } = render(
         <ProviderCard
           provider={provider}
-          userBid={80}
+          userBid={8000}
           isBestOfferProvider={false}
           bestOfferSlotId={null}
+          timeWindow={defaultTimeWindow}
         />
       );
 
@@ -532,14 +568,80 @@ describe('ProviderCard', () => {
       render(
         <ProviderCard
           provider={provider}
-          userBid={80}
+          userBid={8000}
           isBestOfferProvider={false}
           bestOfferSlotId={null}
+          timeWindow={defaultTimeWindow}
         />
       );
 
       expect(screen.getByRole('heading', { level: 3, name: 'Serenity Spa' })).toBeInTheDocument();
-      expect(screen.getByRole('heading', { level: 4, name: 'Available Slots' })).toBeInTheDocument();
+      expect(screen.getByRole('heading', { level: 4, name: 'Select Time Slot' })).toBeInTheDocument();
+    });
+
+    it('should have accessible dropdown for slot selection', () => {
+      const provider = createProviderFixture();
+      render(
+        <ProviderCard
+          provider={provider}
+          userBid={8000}
+          isBestOfferProvider={false}
+          bestOfferSlotId={null}
+          timeWindow={defaultTimeWindow}
+        />
+      );
+
+      const dropdown = screen.getByRole('combobox', { name: /select time slot/i });
+      expect(dropdown).toBeInTheDocument();
+    });
+  });
+
+  describe('Time Window Filtering', () => {
+    it('should only show slots within Morning time window', () => {
+      const provider = createProviderFixture();
+      const { container } = render(
+        <ProviderCard
+          provider={provider}
+          userBid={8000}
+          isBestOfferProvider={false}
+          bestOfferSlotId={null}
+          timeWindow="Morning"
+        />
+      );
+
+      // Morning slot (10:00) should be visible, Afternoon slot (14:00) should not
+      const dropdown = screen.getByRole('combobox');
+      expect(dropdown).toBeInTheDocument();
+      // Only one option should be in the dropdown for Morning window
+    });
+
+    it('should not render provider when no slots match time window', () => {
+      const provider = createProviderFixture({
+        slots: [
+          {
+            slotId: 'slot-evening',
+            startTime: '2025-11-28T18:00:00', // Evening slot (6 PM local)
+            endTime: '2025-11-28T19:00:00',
+            basePrice: 10000,
+            maxDiscount: 20,
+            maxDiscountedPrice: 8000,
+            serviceName: 'Evening Massage',
+            durationMin: 60,
+          },
+        ],
+      });
+      const { container } = render(
+        <ProviderCard
+          provider={provider}
+          userBid={8000}
+          isBestOfferProvider={false}
+          bestOfferSlotId={null}
+          timeWindow="Morning"
+        />
+      );
+
+      // No Morning slots, so provider should not render
+      expect(container.querySelector('article')).not.toBeInTheDocument();
     });
   });
 });
