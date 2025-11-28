@@ -321,6 +321,12 @@ Be specific about what you need and why.
 ```markdown
 # USER ACCESSIBILITY TEST
 
+**Report ID:** UAT-YYYY-MM-DD-vNN
+**Date:** YYYY-MM-DD
+**Time:** HH:MM:SS +TIMEZONE
+**Agent:** ua-tester
+**Type:** User Accessibility Test
+
 ## What I Tested
 
 I tested the [screen/flow name] starting from [URL or navigation path]. The goal was to [user goal in plain language]. Based on the design docs and your feedback, I expected [describe expected behavior in 2-3 sentences].
@@ -393,41 +399,58 @@ Priority: [P1 critical / P2 important / P3 nice-to-have]
 
 ### Base Directory
 ```
-claude/reports/ui-accessibility/YYYY-MM-DD/
+claude/reports/UAT/
 ```
 
 ### File Name Format
 ```
-<slug>-test-vNNN.md
+UAT-YYYY-MM-DD-vNN.md
 ```
 
 Where:
-- `<slug>` = Short, descriptive slug (e.g., `discovery-search-empty-state`)
-- `vNNN` = Version number with 3 digits (e.g., `v001`, `v002`)
+- `UAT` = User Accessibility Test prefix
+- `YYYY-MM-DD` = Date of report creation
+- `vNN` = Version number with 2 digits (e.g., `v01`, `v02`)
 
 ### Versioning Rules
 
 **Daily Reset:**
 - Versioning resets every day
-- First test of the day is `v001`
-- Next test is `v002`, etc.
+- First test of the day is `v01`
+- Next test is `v02`, etc.
 - Never overwrite existing files
 
 **Examples:**
 
-Test done on 2025-11-28:
+First test on 2025-11-28:
 ```
-claude/reports/ui-accessibility/2025-11-28/discovery-search-empty-state-test-v001.md
+claude/reports/UAT/UAT-2025-11-28-v01.md
 ```
 
 Second test the same day:
 ```
-claude/reports/ui-accessibility/2025-11-28/offers-filter-behavior-test-v002.md
+claude/reports/UAT/UAT-2025-11-28-v02.md
 ```
 
 First test the next day (resets):
 ```
-claude/reports/ui-accessibility/2025-11-29/slot-card-mobile-test-v001.md
+claude/reports/UAT/UAT-2025-11-29-v01.md
+```
+
+### Required Metadata
+
+Every UAT report must include metadata at the top:
+
+```markdown
+# Report Title
+
+**Report ID:** UAT-YYYY-MM-DD-vNN
+**Date:** YYYY-MM-DD
+**Time:** HH:MM:SS +TIMEZONE
+**Agent:** ua-tester
+**Type:** User Accessibility Test
+
+[Report content...]
 ```
 
 ### Your Responsibility
