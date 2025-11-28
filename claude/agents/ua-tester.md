@@ -318,6 +318,8 @@ Be specific about what you need and why.
 
 **This template is mandatory.** Every test report must use conversational, human-readable language.
 
+**CRITICAL: NEVER use markdown tables.** Tables are hard to read and parse. Always write findings in natural prose, not tabular format.
+
 ```markdown
 # USER ACCESSIBILITY TEST
 

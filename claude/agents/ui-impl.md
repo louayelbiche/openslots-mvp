@@ -143,6 +143,8 @@ If any required field is missing, escalate immediately to build-lead.
 
 ## 4. Deliverable Format
 
+**CRITICAL: NEVER use markdown tables in your output.** Always use natural prose or simple lists.
+
 When task is complete, return this structured summary to build-lead:
 
 ```

@@ -100,6 +100,9 @@ Definition of Done: [All tests pass, coverage >80%]
 ```
 
 ## 4. Deliverable Format
+
+**CRITICAL: NEVER use markdown tables in your output.** Always use natural prose or simple lists.
+
 ```
 Task ID: TEST-###
 Status: Complete

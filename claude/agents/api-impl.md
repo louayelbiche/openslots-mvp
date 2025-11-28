@@ -104,6 +104,9 @@ Definition of Done: [Tests pass, spec compliance]
 ```
 
 ## 4. Deliverable Format
+
+**CRITICAL: NEVER use markdown tables in your output.** Always use natural prose or simple lists.
+
 ```
 Task ID: API-###
 Status: Complete
