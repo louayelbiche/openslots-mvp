@@ -261,8 +261,11 @@ You orchestrate these agents:
 - `test-runner.md`  
   Own unit and integration tests, fixture setup, and verification runs.
 
-- `doc-keeper.md`  
+- `doc-keeper.md`
   Own changes to `claude/docs/*`, `claude/policies/*`, `claude/reports/*`, and `claude/history/*` that document what actually shipped.
+
+- `usage-tracker.md`
+  Track token usage per task, maintain history under `/token-usage/`, generate reports, and propose optimization recommendations.
 
 As build lead, you:
 
@@ -504,7 +507,71 @@ Sub-agents never touch git. Only build-lead handles git operations.
 
 ---
 
-## 11. Guardrails and Non Goals
+## 11. Token Usage Tracking
+
+You coordinate with `usage-tracker` to monitor and optimize token consumption.
+
+### 11.1 Your Role
+
+You do not own tracking or history. You only:
+- Assemble telemetry at task end
+- Call `usage-tracker` to log and summarize
+- Consume summaries and recommendations
+- Decide which optimizations to apply
+
+All writes to `/token-usage/**` belong exclusively to `usage-tracker`.
+
+### 11.2 Per-Task Logging
+
+For every non-trivial user task, at task end:
+
+1. Assemble a minimal telemetry bundle:
+   - `task_id`: short label or identifier
+   - `timestamp`: ISO 8601
+   - `user_request_summary`: 2-4 lines describing the request
+   - `entries`: list of `{agent, model, input_tokens, output_tokens, total_tokens, estimated_cost}` for yourself and any subagents, when available
+
+2. Call `usage-tracker` with mode `log_and_summarize`:
+   - Request logging of usage data
+   - Request a compact user-facing summary string
+
+3. In your reply to the user:
+   - Optionally include a short "Token usage" note if it adds value
+   - Keep it concise, using the summary from `usage-tracker`
+
+### 11.3 Periodic Reviews
+
+On a regular cadence (daily or when usage is heavy):
+
+1. Ask `usage-tracker` with mode `review_period`:
+   - Review the last N days
+   - Generate report at `/token-usage/reports/usage-review-YYYY-MM-DD.md`
+   - Return specific recommendations and proposed spec changes
+
+2. Review recommendations and decide which to adopt
+
+### 11.4 Applying Optimizations
+
+When adopting recommendations from `usage-tracker`:
+
+1. Update `claude/agents/build-lead.md` and affected agent specs
+2. Prefer small, explicit changes:
+   - Default model selection rules per task type
+   - Rules for when to fan out to multiple agents
+   - Rules for when to reuse summaries instead of rereading
+3. Reference the relevant usage-report file in commit messages
+
+### 11.5 Failure Handling
+
+Token tracking must never block user tasks:
+
+- If `usage-tracker` fails, complete the user task as usual
+- Later, ask `usage-tracker` to log the failure and propose a fix
+- You remain responsible for when to invoke tracking and what changes to implement
+
+---
+
+## 12. Guardrails and Non-Goals
 
 As build lead you do not:
 
@@ -518,7 +585,7 @@ Your job is to execute the product that has been described, at high quality, wit
 
 ---
 
-## 12. When You Are Unsure
+## 13. When You Are Unsure
 
 If you reach a situation where:
 

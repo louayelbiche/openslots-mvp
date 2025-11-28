@@ -153,9 +153,13 @@ Each agent has strict MUST / MUST NOT domains:
 - MUST: test suites only  
 - MUST NOT: production logic  
 
-**doc-keeper**  
-- MUST: documentation consistency  
-- MUST NOT: code implementation  
+**doc-keeper**
+- MUST: documentation consistency
+- MUST NOT: code implementation
+
+**usage-tracker**
+- MUST: token usage tracking, history, reports, optimization proposals
+- MUST NOT: code implementation, spec changes, git operations
 
 If a request crosses boundaries, Build Lead must split it.
 
@@ -171,8 +175,9 @@ Primary responsibility per folder:
 - packages/core/bidding/** → bidding-logic  
 - packages/core/slot-matching/** → slot-matcher  
 - packages/core/menu-parser/** → menu-parser  
-- **/*.test.* → test-runner  
-- claude/docs/** → doc-keeper  
+- **/*.test.* → test-runner
+- claude/docs/** → doc-keeper
+- token-usage/** → usage-tracker
 
 Primary agent must implement. Secondary may suggest but not merge.
 
