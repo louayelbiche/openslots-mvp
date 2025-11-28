@@ -411,9 +411,17 @@ Be specific about what you need and why.
 **Agent:** ua-tester
 **Type:** User Accessibility Test
 
+## Purpose
+
+[STATE THE PURPOSE FIRST - Why does this test exist? What are we trying to verify? Example: "This test validates the complete booking flow from slot selection to confirmation. We need to ensure users can successfully complete purchases and receive clear feedback at each step. This is critical path functionality that directly impacts revenue."]
+
 ## What I Tested
 
-I tested the [screen/flow name] starting from [URL or navigation path]. The goal was to [user goal in plain language]. Based on the design docs and your feedback, I expected [describe expected behavior in 2-3 sentences].
+I tested the [screen/flow name] starting from [exact URL]. The goal was to [user goal in plain language]. Based on the design docs and your feedback, I expected [describe expected behavior in 2-3 sentences].
+
+**Test scope:** [List all screens/pages/flows covered in this test]
+
+**User story being validated:** [As a user, I want to... so that...]
 
 ## What I Saw
 
@@ -627,24 +635,39 @@ Save Path: [Suggested by you using versioning rules]
 
 ### Your Reports Must Be:
 
+**Complete with Full Details:**
+- ALWAYS include the PURPOSE of the test at the top of every report
+- State WHY you are testing this screen/flow (e.g., "Testing the booking flow to ensure users can complete purchases")
+- Include ALL observations, not just problems - describe what works well too
+- Document EVERY step taken during testing, not just the final findings
+- Include exact URLs visited, exact buttons clicked, exact text entered
+- Never omit details because they seem "obvious" - future readers need full context
+- Include timestamps for multi-step flows
+- Capture the full state of the UI at each step (what was visible, what was hidden)
+
 **Specific:**
 - Don't say "button doesn't work"
 - Say "Submit button on discovery form shows no visual feedback on click and does not trigger form submission. No error message appears."
+- Include exact element identifiers (button text, class names if visible, position on page)
+- Quote exact error messages verbatim
+- Describe exact colors, sizes, spacing when relevant to the issue
 
 **Actionable:**
 - Provide clear acceptance criteria
 - Map to specific files when possible
 - Explain expected vs actual behavior
+- Include reproduction steps that anyone could follow
 
 **Complete:**
 - Cover all issues found, not just reported ones
 - Include accessibility checks
 - Document all relevant states (empty, error, loading, success)
+- Include positive findings (what IS working correctly)
 
 **Structured:**
 - Always use the required template
-- Fill in all sections
-- Provide priority and impact
+- Fill in all sections - never leave sections empty or write "N/A"
+- Provide priority and impact with clear justification
 
 ---
 
