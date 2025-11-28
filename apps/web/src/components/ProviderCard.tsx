@@ -1,52 +1,20 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import type { Provider, Slot, MatchLikelihood, TimeWindow } from '../types/discovery';
-import { MatchBadge, calculateMatchLikelihood } from './MatchBadge';
+import type { Provider, Slot } from '../types/discovery';
 import { SlotDropdown } from './SlotDropdown';
-
-// Time window hour ranges
-const TIME_WINDOW_RANGES: Record<TimeWindow, { start: number; end: number }> = {
-  Morning: { start: 9, end: 12 },
-  Afternoon: { start: 12, end: 16 },
-  Evening: { start: 16, end: 20 },
-  Custom: { start: 0, end: 24 },
-};
 
 interface ProviderCardProps {
   provider: Provider;
   userBid: number;
   isBestOfferProvider: boolean;
+  isHighestRated?: boolean;
+  isClosest?: boolean;
   bestOfferSlotId: string | null;
-  timeWindow: TimeWindow;
   onBid?: (slotId: string, providerId: string) => void;
 }
 
-// Get overall match likelihood for provider (best match among slots)
-function getProviderMatchLikelihood(slots: Slot[], userBid: number): MatchLikelihood {
-  if (slots.length === 0) return 'Very Low';
-
-  const likelihoods = slots.map((slot) =>
-    calculateMatchLikelihood(userBid, slot.maxDiscountedPrice)
-  );
-
-  // Return the best match
-  if (likelihoods.includes('Very High')) return 'Very High';
-  if (likelihoods.includes('High')) return 'High';
-  if (likelihoods.includes('Low')) return 'Low';
-  return 'Very Low';
-}
-
-// Filter slots to only those within the selected time window
-function filterSlotsByTimeWindow(slots: Slot[], timeWindow: TimeWindow): Slot[] {
-  const range = TIME_WINDOW_RANGES[timeWindow];
-  return slots.filter((slot) => {
-    const slotHour = new Date(slot.startTime).getHours();
-    return slotHour >= range.start && slotHour < range.end;
-  });
-}
-
-// Find the best offer slot among filtered slots
+// Find the best offer slot among provider's slots
 function findBestOfferInSlots(slots: Slot[], userBid: number): string | null {
   if (slots.length === 0) return null;
 
@@ -68,18 +36,18 @@ export function ProviderCard({
   provider,
   userBid,
   isBestOfferProvider,
+  isHighestRated = false,
+  isClosest = false,
   bestOfferSlotId,
-  timeWindow,
   onBid,
 }: ProviderCardProps) {
-  // Filter slots by time window
-  const filteredSlots = filterSlotsByTimeWindow(provider.slots, timeWindow);
+  const slots = provider.slots;
 
-  // Find the best offer among filtered slots for this provider
-  const localBestOfferSlotId = findBestOfferInSlots(filteredSlots, userBid);
+  // Find the best offer among provider's slots
+  const localBestOfferSlotId = findBestOfferInSlots(slots, userBid);
 
   // Use the global best offer slot if it's in this provider, otherwise use local best
-  const effectiveBestOfferSlotId = filteredSlots.some(s => s.slotId === bestOfferSlotId)
+  const effectiveBestOfferSlotId = slots.some(s => s.slotId === bestOfferSlotId)
     ? bestOfferSlotId
     : localBestOfferSlotId;
 
@@ -93,21 +61,22 @@ export function ProviderCard({
     }
   }, [effectiveBestOfferSlotId, selectedSlotId]);
 
-  const overallMatch = getProviderMatchLikelihood(filteredSlots, userBid);
-
   const handleBid = (slotId: string) => {
     if (onBid) {
       onBid(slotId, provider.providerId);
     }
   };
 
-  // Don't render if no slots in time window
-  if (filteredSlots.length === 0) {
-    return null;
-  }
+  // Calculate lowest price from slots
+  const lowestPrice = Math.min(...slots.map(s => s.maxDiscountedPrice));
 
-  // Calculate lowest price from filtered slots
-  const lowestFilteredPrice = Math.min(...filteredSlots.map(s => s.maxDiscountedPrice));
+  // Collect all badges this provider has
+  const badges: Array<{ label: string; color: string }> = [];
+  if (isBestOfferProvider) badges.push({ label: 'Best Offer', color: 'bg-amber-500' });
+  if (isHighestRated) badges.push({ label: 'Highest Rated', color: 'bg-blue-500' });
+  if (isClosest) badges.push({ label: 'Closest', color: 'bg-emerald-500' });
+
+  const hasBadges = badges.length > 0;
 
   return (
     <article
@@ -116,10 +85,17 @@ export function ProviderCard({
         ${isBestOfferProvider ? 'border-amber-400 shadow-lg' : 'border-slate-200'}
       `}
     >
-      {/* Best Offer Badge */}
-      {isBestOfferProvider && (
-        <div className="bg-amber-500 text-white text-center py-2 text-sm font-semibold">
-          BEST OFFER
+      {/* Provider Badges */}
+      {hasBadges && (
+        <div className="flex">
+          {badges.map((badge) => (
+            <div
+              key={badge.label}
+              className={`${badge.color} text-white text-center py-2 text-sm font-semibold flex-1`}
+            >
+              {badge.label.toUpperCase()}
+            </div>
+          ))}
         </div>
       )}
 
@@ -149,9 +125,8 @@ export function ProviderCard({
           </div>
 
           <div className="text-right">
-            <MatchBadge likelihood={overallMatch} />
-            <p className="text-sm text-slate-500 mt-1">
-              From <span className="font-semibold text-slate-900">${(lowestFilteredPrice / 100).toFixed(lowestFilteredPrice % 100 === 0 ? 0 : 2)}</span>
+            <p className="text-sm text-slate-500">
+              From <span className="font-semibold text-slate-900">${(lowestPrice / 100).toFixed(lowestPrice % 100 === 0 ? 0 : 2)}</span>
             </p>
           </div>
         </div>
@@ -163,9 +138,10 @@ export function ProviderCard({
           Select Time Slot
         </h4>
         <SlotDropdown
-          slots={filteredSlots}
+          slots={slots}
           bestOfferSlotId={effectiveBestOfferSlotId}
           selectedSlotId={selectedSlotId}
+          isBestOfferProvider={isBestOfferProvider}
           onSelect={setSelectedSlotId}
           onBid={handleBid}
         />

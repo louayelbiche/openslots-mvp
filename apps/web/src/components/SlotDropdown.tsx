@@ -7,6 +7,7 @@ interface SlotDropdownProps {
   slots: Slot[];
   bestOfferSlotId: string | null;
   selectedSlotId: string | null;
+  isBestOfferProvider: boolean;
   onSelect: (slotId: string) => void;
   onBid: (slotId: string) => void;
 }
@@ -28,6 +29,7 @@ export function SlotDropdown({
   slots,
   bestOfferSlotId,
   selectedSlotId,
+  isBestOfferProvider,
   onSelect,
   onBid,
 }: SlotDropdownProps) {
@@ -57,7 +59,7 @@ export function SlotDropdown({
           aria-label="Select time slot"
         >
           {slots.map((slot) => {
-            const isBest = slot.slotId === bestOfferSlotId;
+            const isBest = isBestOfferProvider && slot.slotId === bestOfferSlotId;
             const startTime = formatTime(slot.startTime);
             const endTime = formatTime(slot.endTime);
             const price = formatPrice(slot.maxDiscountedPrice);
@@ -96,7 +98,7 @@ export function SlotDropdown({
               <span className="text-sm font-medium text-slate-900">
                 {selectedSlot.serviceName}
               </span>
-              {selectedSlot.slotId === bestOfferSlotId && (
+              {isBestOfferProvider && selectedSlot.slotId === bestOfferSlotId && (
                 <span className="text-xs bg-amber-500 text-white px-2 py-0.5 rounded-full font-medium">
                   Best Offer
                 </span>

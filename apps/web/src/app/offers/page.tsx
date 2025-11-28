@@ -1,12 +1,11 @@
 'use client';
 
-import { useState, useEffect, Suspense, useCallback } from 'react';
+import { useState, useEffect, Suspense, useCallback, useMemo } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import type {
   ServiceCategory,
   TimeWindow,
   Provider,
-  Slot,
   DiscoveryResponse,
 } from '../../types/discovery';
 import { ProviderCard } from '../../components/ProviderCard';
@@ -14,6 +13,9 @@ import { calculateMatchLikelihood } from '../../components/MatchBadge';
 
 const API_BASE_URL =
   process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:3001';
+
+// Sort mode options
+type SortMode = 'price' | 'rating' | 'distance';
 
 // Service labels for display
 const SERVICE_LABELS: Record<ServiceCategory, string> = {
@@ -33,34 +35,16 @@ const TIME_WINDOW_LABELS: Record<TimeWindow, string> = {
   Custom: 'Any Time',
 };
 
-// Time window hour ranges
-const TIME_WINDOW_RANGES: Record<TimeWindow, { start: number; end: number }> = {
-  Morning: { start: 9, end: 12 },
-  Afternoon: { start: 12, end: 16 },
-  Evening: { start: 16, end: 20 },
-  Custom: { start: 0, end: 24 },
-};
-
-// Filter slots by time window
-function filterSlotsByTimeWindow(slots: Slot[], timeWindow: TimeWindow): Slot[] {
-  const range = TIME_WINDOW_RANGES[timeWindow];
-  return slots.filter((slot) => {
-    const slotHour = new Date(slot.startTime).getHours();
-    return slotHour >= range.start && slotHour < range.end;
-  });
-}
-
-// Find the Best Offer slot (closest price to user bid) - only within time window
+// Find the Best Offer slot (closest price to user bid)
+// Note: API already filters slots by time window, so we check all slots
 function findBestOffer(
   providers: Provider[],
-  userBid: number,
-  timeWindow: TimeWindow
+  userBid: number
 ): { providerId: string; slotId: string } | null {
   let bestSlot: { providerId: string; slotId: string; diff: number; price: number } | null = null;
 
   for (const provider of providers) {
-    const filteredSlots = filterSlotsByTimeWindow(provider.slots, timeWindow);
-    for (const slot of filteredSlots) {
+    for (const slot of provider.slots) {
       const diff = Math.abs(slot.maxDiscountedPrice - userBid);
 
       if (
@@ -76,27 +60,68 @@ function findBestOffer(
   return bestSlot ? { providerId: bestSlot.providerId, slotId: bestSlot.slotId } : null;
 }
 
-// Sort providers with Best Offer first, then by match score and other criteria
-function sortProviders(providers: Provider[], userBid: number, bestOfferProviderId: string | null): Provider[] {
+// Filter providers to only include those with available slots
+function filterProvidersWithSlots(providers: Provider[]): Provider[] {
+  return providers.filter((provider) => provider.slots.length > 0);
+}
+
+// Sort providers by selected mode
+function sortProviders(
+  providers: Provider[],
+  sortMode: SortMode,
+  userBid: number,
+  bestOfferProviderId: string | null
+): Provider[] {
   return [...providers].sort((a, b) => {
-    // Best offer provider always first
-    if (a.providerId === bestOfferProviderId) return -1;
-    if (b.providerId === bestOfferProviderId) return 1;
+    // Best offer provider always first when sorting by price
+    if (sortMode === 'price') {
+      if (a.providerId === bestOfferProviderId) return -1;
+      if (b.providerId === bestOfferProviderId) return 1;
+    }
 
-    // Then by best match likelihood
-    const aMatch = getBestMatchScore(a, userBid);
-    const bMatch = getBestMatchScore(b, userBid);
-    if (aMatch !== bMatch) return bMatch - aMatch;
+    switch (sortMode) {
+      case 'price':
+        // By lowest price, then rating, then distance
+        if (a.lowestPrice !== b.lowestPrice) return a.lowestPrice - b.lowestPrice;
+        if (a.rating !== b.rating) return b.rating - a.rating;
+        return a.distance - b.distance;
 
-    // Then by lowest price
-    if (a.lowestPrice !== b.lowestPrice) return a.lowestPrice - b.lowestPrice;
+      case 'rating':
+        // By rating (highest first), then price, then distance
+        if (a.rating !== b.rating) return b.rating - a.rating;
+        if (a.lowestPrice !== b.lowestPrice) return a.lowestPrice - b.lowestPrice;
+        return a.distance - b.distance;
 
-    // Then by rating
-    if (a.rating !== b.rating) return b.rating - a.rating;
+      case 'distance':
+        // By distance (closest first), then price, then rating
+        if (a.distance !== b.distance) return a.distance - b.distance;
+        if (a.lowestPrice !== b.lowestPrice) return a.lowestPrice - b.lowestPrice;
+        return b.rating - a.rating;
 
-    // Finally by distance
-    return a.distance - b.distance;
+      default:
+        return 0;
+    }
   });
+}
+
+// Find the highest rated provider
+function findHighestRatedProvider(providers: Provider[]): string | null {
+  if (providers.length === 0) return null;
+  let best = providers[0];
+  for (const p of providers) {
+    if (p.rating > best.rating) best = p;
+  }
+  return best.providerId;
+}
+
+// Find the closest provider
+function findClosestProvider(providers: Provider[]): string | null {
+  if (providers.length === 0) return null;
+  let best = providers[0];
+  for (const p of providers) {
+    if (p.distance < best.distance) best = p;
+  }
+  return best.providerId;
 }
 
 // Get best match score for a provider (0-3, higher is better)
@@ -129,6 +154,7 @@ function LiveOffersContent() {
   const [providers, setProviders] = useState<Provider[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [sortMode, setSortMode] = useState<SortMode>('price');
 
   // Redirect if missing required params
   useEffect(() => {
@@ -176,11 +202,27 @@ function LiveOffersContent() {
     fetchProviders();
   }, [fetchProviders]);
 
-  // Calculate best offer (only within time window)
-  const bestOffer = timeWindow ? findBestOffer(providers, userBid, timeWindow) : null;
+  // Filter to only providers with available slots (API filters by time window)
+  const providersWithSlots = filterProvidersWithSlots(providers);
 
-  // Sort providers
-  const sortedProviders = sortProviders(providers, userBid, bestOffer?.providerId || null);
+  // Calculate best offer from providers with slots
+  const bestOffer = findBestOffer(providersWithSlots, userBid);
+
+  // Calculate badge assignments (each badge goes to exactly one provider)
+  const highestRatedProviderId = useMemo(
+    () => findHighestRatedProvider(providersWithSlots),
+    [providersWithSlots]
+  );
+  const closestProviderId = useMemo(
+    () => findClosestProvider(providersWithSlots),
+    [providersWithSlots]
+  );
+
+  // Sort providers based on selected mode
+  const sortedProviders = useMemo(
+    () => sortProviders(providersWithSlots, sortMode, userBid, bestOffer?.providerId || null),
+    [providersWithSlots, sortMode, userBid, bestOffer?.providerId]
+  );
 
   // Handle bid action (placeholder for MVP)
   const handleBid = (slotId: string, providerId: string) => {
@@ -221,7 +263,7 @@ function LiveOffersContent() {
         </div>
 
         {/* Context bar */}
-        <div className="bg-white rounded-xl border border-slate-200 p-4 mb-6">
+        <div className="bg-white rounded-xl border border-slate-200 p-4 mb-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <span className="bg-slate-100 text-slate-700 px-3 py-1 rounded-full text-sm">
@@ -235,6 +277,49 @@ function LiveOffersContent() {
               </span>
             </div>
           </div>
+        </div>
+
+        {/* Sort filter buttons */}
+        <div className="flex gap-2 mb-6">
+          <button
+            type="button"
+            onClick={() => setSortMode('price')}
+            className={`
+              flex-1 py-2 px-3 rounded-lg text-sm font-medium transition-all
+              ${sortMode === 'price'
+                ? 'bg-slate-900 text-white'
+                : 'bg-white border border-slate-200 text-slate-700 hover:border-slate-400'}
+            `}
+            aria-pressed={sortMode === 'price'}
+          >
+            Price
+          </button>
+          <button
+            type="button"
+            onClick={() => setSortMode('rating')}
+            className={`
+              flex-1 py-2 px-3 rounded-lg text-sm font-medium transition-all
+              ${sortMode === 'rating'
+                ? 'bg-slate-900 text-white'
+                : 'bg-white border border-slate-200 text-slate-700 hover:border-slate-400'}
+            `}
+            aria-pressed={sortMode === 'rating'}
+          >
+            Rating
+          </button>
+          <button
+            type="button"
+            onClick={() => setSortMode('distance')}
+            className={`
+              flex-1 py-2 px-3 rounded-lg text-sm font-medium transition-all
+              ${sortMode === 'distance'
+                ? 'bg-slate-900 text-white'
+                : 'bg-white border border-slate-200 text-slate-700 hover:border-slate-400'}
+            `}
+            aria-pressed={sortMode === 'distance'}
+          >
+            Distance
+          </button>
         </div>
 
         {/* Loading State */}
@@ -299,7 +384,7 @@ function LiveOffersContent() {
           <div className="space-y-4">
             {/* Results count */}
             <p className="text-sm text-slate-500">
-              {sortedProviders.length} provider{sortedProviders.length !== 1 ? 's' : ''} found
+              {sortedProviders.length} provider{sortedProviders.length !== 1 ? 's' : ''} with availability
             </p>
 
             {sortedProviders.map((provider) => (
@@ -308,10 +393,11 @@ function LiveOffersContent() {
                 provider={provider}
                 userBid={userBid}
                 isBestOfferProvider={provider.providerId === bestOffer?.providerId}
+                isHighestRated={provider.providerId === highestRatedProviderId}
+                isClosest={provider.providerId === closestProviderId}
                 bestOfferSlotId={
                   provider.providerId === bestOffer?.providerId ? bestOffer.slotId : null
                 }
-                timeWindow={timeWindow}
                 onBid={handleBid}
               />
             ))}

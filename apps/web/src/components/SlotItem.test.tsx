@@ -3,14 +3,14 @@ import { render, screen, fireEvent } from '@testing-library/react';
 import { SlotItem } from './SlotItem';
 import type { Slot, MatchLikelihood } from '../types/discovery';
 
-// Test fixture for Slot data
+// Test fixture for Slot data - prices are in cents
 const createSlotFixture = (overrides: Partial<Slot> = {}): Slot => ({
   slotId: 'slot-1',
   startTime: '2025-11-28T10:00:00Z',
   endTime: '2025-11-28T11:00:00Z',
-  basePrice: 100,
+  basePrice: 10000, // $100.00 in cents
   maxDiscount: 20,
-  maxDiscountedPrice: 80,
+  maxDiscountedPrice: 8000, // $80.00 in cents
   serviceName: 'Swedish Massage',
   durationMin: 60,
   ...overrides,
@@ -60,7 +60,7 @@ describe('SlotItem', () => {
     });
 
     it('should render max discounted price', () => {
-      const slot = createSlotFixture({ maxDiscountedPrice: 80 });
+      const slot = createSlotFixture({ maxDiscountedPrice: 8000 }); // $80.00 in cents
       render(
         <SlotItem
           slot={slot}
@@ -383,7 +383,7 @@ describe('SlotItem', () => {
 
   describe('Price Display', () => {
     it('should display price in dollars', () => {
-      const slot = createSlotFixture({ maxDiscountedPrice: 75 });
+      const slot = createSlotFixture({ maxDiscountedPrice: 7500 }); // $75.00 in cents
       render(
         <SlotItem
           slot={slot}
@@ -396,7 +396,7 @@ describe('SlotItem', () => {
     });
 
     it('should handle decimal prices', () => {
-      const slot = createSlotFixture({ maxDiscountedPrice: 79.99 });
+      const slot = createSlotFixture({ maxDiscountedPrice: 7999 }); // $79.99 in cents
       render(
         <SlotItem
           slot={slot}
@@ -409,7 +409,7 @@ describe('SlotItem', () => {
     });
 
     it('should handle very low prices', () => {
-      const slot = createSlotFixture({ maxDiscountedPrice: 10 });
+      const slot = createSlotFixture({ maxDiscountedPrice: 1000 }); // $10.00 in cents
       render(
         <SlotItem
           slot={slot}
@@ -422,7 +422,7 @@ describe('SlotItem', () => {
     });
 
     it('should handle very high prices', () => {
-      const slot = createSlotFixture({ maxDiscountedPrice: 500 });
+      const slot = createSlotFixture({ maxDiscountedPrice: 50000 }); // $500.00 in cents
       render(
         <SlotItem
           slot={slot}
@@ -492,9 +492,9 @@ describe('SlotItem', () => {
   describe('Edge Cases', () => {
     it('should handle slot with zero discount', () => {
       const slot = createSlotFixture({
-        basePrice: 100,
+        basePrice: 10000, // $100.00 in cents
         maxDiscount: 0,
-        maxDiscountedPrice: 100,
+        maxDiscountedPrice: 10000, // $100.00 in cents
       });
       render(
         <SlotItem
@@ -510,9 +510,9 @@ describe('SlotItem', () => {
 
     it('should handle slot with maximum discount', () => {
       const slot = createSlotFixture({
-        basePrice: 100,
+        basePrice: 10000, // $100.00 in cents
         maxDiscount: 50,
-        maxDiscountedPrice: 50,
+        maxDiscountedPrice: 5000, // $50.00 in cents
       });
       render(
         <SlotItem
@@ -624,7 +624,7 @@ describe('SlotItem', () => {
         slotId: 'slot-special',
         startTime: '2025-11-28T14:30:00Z',
         endTime: '2025-11-28T15:30:00Z',
-        maxDiscountedPrice: 85.5,
+        maxDiscountedPrice: 8550, // $85.50 in cents
         serviceName: 'Hot Stone Massage',
         durationMin: 60,
       });
@@ -641,7 +641,7 @@ describe('SlotItem', () => {
 
       expect(screen.getByText('Best')).toBeInTheDocument();
       expect(screen.getByText('High')).toBeInTheDocument();
-      expect(screen.getByText('$85.5')).toBeInTheDocument();
+      expect(screen.getByText('$85.50')).toBeInTheDocument();
       expect(screen.getByText(/Hot Stone Massage/)).toBeInTheDocument();
       expect(screen.getByText(/60 min/)).toBeInTheDocument();
 

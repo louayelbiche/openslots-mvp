@@ -1,11 +1,11 @@
 import { describe, it, expect, vi } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
 import { ProviderCard } from './ProviderCard';
-import type { Provider, TimeWindow } from '../types/discovery';
+import type { Provider } from '../types/discovery';
 
 // Test fixture for Provider data
 // Note: Prices are in cents (8000 = $80.00)
-// Note: Slots are set to Morning (10:00) and Afternoon (14:00) time windows (local time)
+// Note: Time window filtering is done at the page level, not component level
 const createProviderFixture = (overrides: Partial<Provider> = {}): Provider => ({
   providerId: 'provider-1',
   name: 'Serenity Spa',
@@ -17,7 +17,7 @@ const createProviderFixture = (overrides: Partial<Provider> = {}): Provider => (
   slots: [
     {
       slotId: 'slot-1',
-      startTime: '2025-11-28T10:00:00', // Morning slot (10 AM local)
+      startTime: '2025-11-28T10:00:00',
       endTime: '2025-11-28T11:00:00',
       basePrice: 10000,
       maxDiscount: 20,
@@ -27,7 +27,7 @@ const createProviderFixture = (overrides: Partial<Provider> = {}): Provider => (
     },
     {
       slotId: 'slot-2',
-      startTime: '2025-11-28T14:00:00', // Afternoon slot (2 PM local)
+      startTime: '2025-11-28T14:00:00',
       endTime: '2025-11-28T15:00:00',
       basePrice: 12000,
       maxDiscount: 25,
@@ -39,9 +39,6 @@ const createProviderFixture = (overrides: Partial<Provider> = {}): Provider => (
   ...overrides,
 });
 
-// Default time window that includes all test slots
-const defaultTimeWindow: TimeWindow = 'Custom';
-
 describe('ProviderCard', () => {
   describe('Basic Rendering', () => {
     it('should render provider information', () => {
@@ -52,7 +49,6 @@ describe('ProviderCard', () => {
           userBid={8000}
           isBestOfferProvider={false}
           bestOfferSlotId={null}
-          timeWindow={defaultTimeWindow}
         />
       );
 
@@ -69,7 +65,6 @@ describe('ProviderCard', () => {
           userBid={8000}
           isBestOfferProvider={false}
           bestOfferSlotId={null}
-          timeWindow={defaultTimeWindow}
         />
       );
 
@@ -87,7 +82,6 @@ describe('ProviderCard', () => {
           userBid={8000}
           isBestOfferProvider={false}
           bestOfferSlotId={null}
-          timeWindow={defaultTimeWindow}
         />
       );
 
@@ -105,7 +99,6 @@ describe('ProviderCard', () => {
           userBid={8000}
           isBestOfferProvider={false}
           bestOfferSlotId={null}
-          timeWindow={defaultTimeWindow}
         />
       );
 
@@ -122,7 +115,6 @@ describe('ProviderCard', () => {
           userBid={8000}
           isBestOfferProvider={true}
           bestOfferSlotId={null}
-          timeWindow={defaultTimeWindow}
         />
       );
 
@@ -137,7 +129,6 @@ describe('ProviderCard', () => {
           userBid={8000}
           isBestOfferProvider={false}
           bestOfferSlotId={null}
-          timeWindow={defaultTimeWindow}
         />
       );
 
@@ -152,7 +143,6 @@ describe('ProviderCard', () => {
           userBid={8000}
           isBestOfferProvider={true}
           bestOfferSlotId={null}
-          timeWindow={defaultTimeWindow}
         />
       );
 
@@ -169,119 +159,11 @@ describe('ProviderCard', () => {
           userBid={8000}
           isBestOfferProvider={false}
           bestOfferSlotId={null}
-          timeWindow={defaultTimeWindow}
         />
       );
 
       const article = container.querySelector('article');
       expect(article).toHaveClass('border-slate-200');
-    });
-  });
-
-  describe('Match Likelihood Display', () => {
-    it('should display Very High match when user bid meets all slot prices', () => {
-      const provider = createProviderFixture();
-      render(
-        <ProviderCard
-          provider={provider}
-          userBid={10000}
-          isBestOfferProvider={false}
-          bestOfferSlotId={null}
-          timeWindow={defaultTimeWindow}
-        />
-      );
-
-      // Multiple "Very High" badges appear (provider level + slot level)
-      const veryHighBadges = screen.getAllByText('Very High');
-      expect(veryHighBadges.length).toBeGreaterThan(0);
-    });
-
-    it('should display High match when user bid is close to slot prices', () => {
-      const provider = createProviderFixture();
-      render(
-        <ProviderCard
-          provider={provider}
-          userBid={7700} // 96% of lowest price (80)
-          isBestOfferProvider={false}
-          bestOfferSlotId={null}
-          timeWindow={defaultTimeWindow}
-        />
-      );
-
-      const highBadges = screen.getAllByText('High');
-      expect(highBadges.length).toBeGreaterThan(0);
-    });
-
-    it('should display Low match when user bid is moderately below prices', () => {
-      const provider = createProviderFixture();
-      render(
-        <ProviderCard
-          provider={provider}
-          userBid={7000} // 87.5% of lowest price (80)
-          isBestOfferProvider={false}
-          bestOfferSlotId={null}
-          timeWindow={defaultTimeWindow}
-        />
-      );
-
-      const lowBadges = screen.getAllByText('Low');
-      expect(lowBadges.length).toBeGreaterThan(0);
-    });
-
-    it('should display Very Low match when user bid is well below prices', () => {
-      const provider = createProviderFixture();
-      render(
-        <ProviderCard
-          provider={provider}
-          userBid={5000} // 62.5% of lowest price (80)
-          isBestOfferProvider={false}
-          bestOfferSlotId={null}
-          timeWindow={defaultTimeWindow}
-        />
-      );
-
-      const veryLowBadges = screen.getAllByText('Very Low');
-      expect(veryLowBadges.length).toBeGreaterThan(0);
-    });
-
-    it('should use best match among multiple slots', () => {
-      const provider = createProviderFixture({
-        slots: [
-          {
-            slotId: 'slot-1',
-            startTime: '2025-11-28T10:00:00',
-            endTime: '2025-11-28T11:00:00',
-            basePrice: 10000,
-            maxDiscount: 20,
-            maxDiscountedPrice: 8000,
-            serviceName: 'Swedish Massage',
-            durationMin: 60,
-          },
-          {
-            slotId: 'slot-2',
-            startTime: '2025-11-28T14:00:00',
-            endTime: '2025-11-28T15:00:00',
-            basePrice: 5000,
-            maxDiscount: 10,
-            maxDiscountedPrice: 4000,
-            serviceName: 'Chair Massage',
-            durationMin: 30,
-          },
-        ],
-      });
-      render(
-        <ProviderCard
-          provider={provider}
-          userBid={4200} // Very High for slot-2, Low for slot-1
-          isBestOfferProvider={false}
-          bestOfferSlotId={null}
-          timeWindow={defaultTimeWindow}
-        />
-      );
-
-      // Should show the best match (Very High) - appears multiple times
-      const veryHighBadges = screen.getAllByText('Very High');
-      expect(veryHighBadges.length).toBeGreaterThan(0);
     });
   });
 
@@ -296,7 +178,6 @@ describe('ProviderCard', () => {
           userBid={8000}
           isBestOfferProvider={false}
           bestOfferSlotId="slot-1"
-          timeWindow={defaultTimeWindow}
           onBid={onBid}
         />
       );
@@ -320,7 +201,6 @@ describe('ProviderCard', () => {
           userBid={8000}
           isBestOfferProvider={false}
           bestOfferSlotId="slot-1"
-          timeWindow={defaultTimeWindow}
           onBid={onBid}
         />
       );
@@ -345,7 +225,6 @@ describe('ProviderCard', () => {
           userBid={8000}
           isBestOfferProvider={false}
           bestOfferSlotId={null}
-          timeWindow={defaultTimeWindow}
         />
       );
 
@@ -364,7 +243,6 @@ describe('ProviderCard', () => {
           userBid={8000}
           isBestOfferProvider={true}
           bestOfferSlotId="slot-1"
-          timeWindow={defaultTimeWindow}
         />
       );
 
@@ -380,7 +258,6 @@ describe('ProviderCard', () => {
           userBid={8000}
           isBestOfferProvider={false}
           bestOfferSlotId="non-existent-slot"
-          timeWindow={defaultTimeWindow}
         />
       );
 
@@ -397,7 +274,6 @@ describe('ProviderCard', () => {
           userBid={8000}
           isBestOfferProvider={true}
           bestOfferSlotId="slot-1"
-          timeWindow={defaultTimeWindow}
         />
       );
 
@@ -408,20 +284,21 @@ describe('ProviderCard', () => {
   });
 
   describe('Edge Cases', () => {
-    it('should not render provider with no slots in time window', () => {
+    it('should render provider with empty slots showing no availability message', () => {
+      // Note: In practice, the page filters out providers with no slots
+      // but the component handles this gracefully if passed empty slots
       const provider = createProviderFixture({ slots: [] });
-      const { container } = render(
+      render(
         <ProviderCard
           provider={provider}
           userBid={8000}
           isBestOfferProvider={false}
           bestOfferSlotId={null}
-          timeWindow={defaultTimeWindow}
         />
       );
 
-      // Provider with no slots returns null
-      expect(container.querySelector('article')).not.toBeInTheDocument();
+      // SlotDropdown shows "no slots" message
+      expect(screen.getByText('No slots available in this time window')).toBeInTheDocument();
     });
 
     it('should handle provider with single slot', () => {
@@ -445,13 +322,10 @@ describe('ProviderCard', () => {
           userBid={8000}
           isBestOfferProvider={false}
           bestOfferSlotId={null}
-          timeWindow={defaultTimeWindow}
         />
       );
 
       expect(screen.getByText(/Swedish Massage/)).toBeInTheDocument();
-      const veryHighBadges = screen.getAllByText('Very High');
-      expect(veryHighBadges.length).toBeGreaterThan(0);
     });
 
     it('should handle very high rating', () => {
@@ -462,7 +336,6 @@ describe('ProviderCard', () => {
           userBid={8000}
           isBestOfferProvider={false}
           bestOfferSlotId={null}
-          timeWindow={defaultTimeWindow}
         />
       );
 
@@ -477,7 +350,6 @@ describe('ProviderCard', () => {
           userBid={8000}
           isBestOfferProvider={false}
           bestOfferSlotId={null}
-          timeWindow={defaultTimeWindow}
         />
       );
 
@@ -492,7 +364,6 @@ describe('ProviderCard', () => {
           userBid={8000}
           isBestOfferProvider={false}
           bestOfferSlotId={null}
-          timeWindow={defaultTimeWindow}
         />
       );
 
@@ -507,7 +378,6 @@ describe('ProviderCard', () => {
           userBid={8000}
           isBestOfferProvider={false}
           bestOfferSlotId={null}
-          timeWindow={defaultTimeWindow}
         />
       );
 
@@ -522,12 +392,11 @@ describe('ProviderCard', () => {
           userBid={0}
           isBestOfferProvider={false}
           bestOfferSlotId={null}
-          timeWindow={defaultTimeWindow}
         />
       );
 
-      const veryLowBadges = screen.getAllByText('Very Low');
-      expect(veryLowBadges.length).toBeGreaterThan(0);
+      // Should render without crashing
+      expect(screen.getByText('Serenity Spa')).toBeInTheDocument();
     });
 
     it('should handle very high user bid', () => {
@@ -538,12 +407,11 @@ describe('ProviderCard', () => {
           userBid={100000}
           isBestOfferProvider={false}
           bestOfferSlotId={null}
-          timeWindow={defaultTimeWindow}
         />
       );
 
-      const veryHighBadges = screen.getAllByText('Very High');
-      expect(veryHighBadges.length).toBeGreaterThan(0);
+      // Should render without crashing
+      expect(screen.getByText('Serenity Spa')).toBeInTheDocument();
     });
   });
 
@@ -556,7 +424,6 @@ describe('ProviderCard', () => {
           userBid={8000}
           isBestOfferProvider={false}
           bestOfferSlotId={null}
-          timeWindow={defaultTimeWindow}
         />
       );
 
@@ -571,7 +438,6 @@ describe('ProviderCard', () => {
           userBid={8000}
           isBestOfferProvider={false}
           bestOfferSlotId={null}
-          timeWindow={defaultTimeWindow}
         />
       );
 
@@ -587,7 +453,6 @@ describe('ProviderCard', () => {
           userBid={8000}
           isBestOfferProvider={false}
           bestOfferSlotId={null}
-          timeWindow={defaultTimeWindow}
         />
       );
 
@@ -596,52 +461,4 @@ describe('ProviderCard', () => {
     });
   });
 
-  describe('Time Window Filtering', () => {
-    it('should only show slots within Morning time window', () => {
-      const provider = createProviderFixture();
-      const { container } = render(
-        <ProviderCard
-          provider={provider}
-          userBid={8000}
-          isBestOfferProvider={false}
-          bestOfferSlotId={null}
-          timeWindow="Morning"
-        />
-      );
-
-      // Morning slot (10:00) should be visible, Afternoon slot (14:00) should not
-      const dropdown = screen.getByRole('combobox');
-      expect(dropdown).toBeInTheDocument();
-      // Only one option should be in the dropdown for Morning window
-    });
-
-    it('should not render provider when no slots match time window', () => {
-      const provider = createProviderFixture({
-        slots: [
-          {
-            slotId: 'slot-evening',
-            startTime: '2025-11-28T18:00:00', // Evening slot (6 PM local)
-            endTime: '2025-11-28T19:00:00',
-            basePrice: 10000,
-            maxDiscount: 20,
-            maxDiscountedPrice: 8000,
-            serviceName: 'Evening Massage',
-            durationMin: 60,
-          },
-        ],
-      });
-      const { container } = render(
-        <ProviderCard
-          provider={provider}
-          userBid={8000}
-          isBestOfferProvider={false}
-          bestOfferSlotId={null}
-          timeWindow="Morning"
-        />
-      );
-
-      // No Morning slots, so provider should not render
-      expect(container.querySelector('article')).not.toBeInTheDocument();
-    });
-  });
 });

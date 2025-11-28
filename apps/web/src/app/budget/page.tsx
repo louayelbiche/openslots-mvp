@@ -1,8 +1,11 @@
 'use client';
 
-import { useState, useEffect, Suspense } from 'react';
+import { useState, useEffect, Suspense, useCallback } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import type { ServiceCategory, TimeWindow, MatchLikelihood } from '../../types/discovery';
+import type { ServiceCategory, TimeWindow, MatchLikelihood, DiscoveryResponse } from '../../types/discovery';
+
+const API_BASE_URL =
+  process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:3001';
 
 // Service labels for display
 const SERVICE_LABELS: Record<ServiceCategory, string> = {
@@ -58,6 +61,8 @@ function BudgetSelectorContent() {
   const [budget, setBudget] = useState(DEFAULT_BUDGET);
   const [inputValue, setInputValue] = useState(DEFAULT_BUDGET.toString());
   const [inputError, setInputError] = useState('');
+  const [recommendedPrice, setRecommendedPrice] = useState<number | null>(null);
+  const [loadingRecommended, setLoadingRecommended] = useState(true);
 
   // Redirect if missing required params
   useEffect(() => {
@@ -65,6 +70,57 @@ function BudgetSelectorContent() {
       router.push('/');
     }
   }, [service, city, timeWindow, router]);
+
+  // Fetch recommended price from discovery API
+  const fetchRecommendedPrice = useCallback(async () => {
+    if (!service || !city || !timeWindow) return;
+
+    setLoadingRecommended(true);
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/discovery`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          serviceCategory: service,
+          city,
+          zipCode: zipCode || undefined,
+          timeWindow,
+        }),
+      });
+
+      if (response.ok) {
+        const data = (await response.json()) as DiscoveryResponse;
+        // Calculate average price across all slots from all providers
+        const allPrices: number[] = [];
+        for (const provider of data.providers || []) {
+          for (const slot of provider.slots) {
+            allPrices.push(slot.maxDiscountedPrice);
+          }
+        }
+
+        if (allPrices.length > 0) {
+          const avgCents = allPrices.reduce((a, b) => a + b, 0) / allPrices.length;
+          // Convert to dollars and round to nearest $5
+          const avgDollars = Math.round(avgCents / 100 / 5) * 5;
+          setRecommendedPrice(avgDollars);
+
+          // Set as initial budget if within range
+          if (avgDollars >= MIN_BUDGET && avgDollars <= MAX_BUDGET) {
+            setBudget(avgDollars);
+            setInputValue(avgDollars.toString());
+          }
+        }
+      }
+    } catch (err) {
+      console.error('Failed to fetch recommended price:', err);
+    } finally {
+      setLoadingRecommended(false);
+    }
+  }, [service, city, zipCode, timeWindow]);
+
+  useEffect(() => {
+    fetchRecommendedPrice();
+  }, [fetchRecommendedPrice]);
 
   // Calculate match likelihood based on budget
   const matchLikelihood = getMatchLikelihood(budget);
@@ -176,6 +232,43 @@ function BudgetSelectorContent() {
             </span>
           </div>
         </div>
+
+        {/* Recommended Price Card */}
+        {!loadingRecommended && recommendedPrice !== null && (
+          <div className="bg-emerald-50 rounded-xl border border-emerald-200 p-4 mb-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <svg
+                  className="w-5 h-5 text-emerald-600"
+                  fill="currentColor"
+                  viewBox="0 0 20 20"
+                >
+                  <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                </svg>
+                <span className="text-sm font-medium text-emerald-800">Recommended Price</span>
+              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  setBudget(recommendedPrice);
+                  setInputValue(recommendedPrice.toString());
+                }}
+                className="text-2xl font-bold text-emerald-700 hover:underline"
+              >
+                ${recommendedPrice}
+              </button>
+            </div>
+          </div>
+        )}
+
+        {loadingRecommended && (
+          <div className="bg-slate-100 rounded-xl border border-slate-200 p-4 mb-4 animate-pulse">
+            <div className="flex items-center justify-between">
+              <div className="h-5 bg-slate-200 rounded w-32"></div>
+              <div className="h-8 bg-slate-200 rounded w-16"></div>
+            </div>
+          </div>
+        )}
 
         {/* Price Display Card */}
         <div className="bg-white rounded-xl border border-slate-200 p-6 mb-6 text-center">
