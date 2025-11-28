@@ -316,83 +316,75 @@ Be specific about what you need and why.
 
 ## 7. Required Output Format — User Accessibility Test
 
-**This template is mandatory.** Every test report must follow this structure:
+**This template is mandatory.** Every test report must use conversational, human-readable language.
 
 ```markdown
 # USER ACCESSIBILITY TEST
 
-## 1. Context
-- **Screen/Flow:** [Name of screen or user flow]
-- **Entry Point/URL:** [Starting URL or navigation path]
-- **User Goal:** [What the user is trying to accomplish]
-- **Expected Behavior:** [From user + design docs - what should happen]
+## What I Tested
 
-## 2. Observed Behavior
-- **Summary:** [High-level description of what happened]
-- **Steps:**
-  1. [Action taken]
-  2. [Result observed]
-  3. [Next action]
-  ...
-- **Notable Details:** [Anything unusual, unexpected, or worth highlighting]
+I tested the [screen/flow name] starting from [URL or navigation path]. The goal was to [user goal in plain language]. Based on the design docs and your feedback, I expected [describe expected behavior in 2-3 sentences].
 
-## 3. Issues Found
+## What I Saw
 
-### Issue 1: [Title]
-- **Type:** [Visual] / [Behavior] / [Accessibility] / [Content]
-- **Severity:** [Low] / [Medium] / [High]
-- **Expected:** [What should happen]
-- **Actual:** [What actually happens]
-- **Impact on User:** [How this affects the user experience]
-- **Likely Cause:** [Your inference about root cause]
-- **Likely Files:** [Probable source code locations]
+[Write a natural narrative describing what happened. Tell the story of using the screen/flow step by step. Example:]
 
-### Issue 2: [Title]
-...
+When I landed on the page, I saw [describe visual layout]. I tried to [action], and [what happened]. Then I [next action], which [result]. The overall experience felt [impression].
 
-## 4. Recommended Changes by Agent
+[Include any notable details that stood out - both good and bad.]
 
-### For ui-impl:
-#### Change 1: [Description]
-- **Files:** [List of files to modify]
-- **Description:** [What to change and why]
-- **Acceptance Criteria:**
-  - [ ] [Specific, testable criterion 1]
-  - [ ] [Specific, testable criterion 2]
-  - [ ] [Specific, testable criterion 3]
+## Issues I Found
 
-### For api-impl:
-#### Change 1: [Description]
-- **Files:** [List of files to modify]
-- **Description:** [What to change and why]
-- **Acceptance Criteria:**
-  - [ ] [Specific, testable criterion 1]
-  - [ ] [Specific, testable criterion 2]
+### [Issue title in plain language]
 
-### For db-modeler (if needed):
-#### Change 1: [Description]
-- **Files:** [List of files to modify]
-- **Description:** [What to change and why]
-- **Acceptance Criteria:**
-  - [ ] [Specific, testable criterion 1]
-  - [ ] [Specific, testable criterion 2]
+This is a [visual/behavior/accessibility/content] issue with [low/medium/high] severity.
 
-## 5. Accessibility & Usability Notes
-- **Keyboard Navigation:** [Findings and issues]
-- **Focus Indicators:** [Findings and issues]
-- **Empty/Error States:** [Findings and issues]
-- **Content Clarity:** [Findings and issues]
-- **Mobile Behavior:** [Findings and issues]
+Here's what's happening: [Describe the issue in 2-3 sentences like you're explaining it to a colleague. Paint the picture of what you see and why it's problematic.]
 
-## 6. Open Questions / Uncertainties
-- [Question or uncertainty 1]
-- [Question or uncertainty 2]
-- [What additional information would help confirm findings]
+What I expected to see instead: [Describe the correct behavior in natural language.]
 
-## 7. Impact & Priority
-- **Overall Impact:** Low / Medium / High
-- **Recommended Priority:** P1 (critical) / P2 (important) / P3 (nice-to-have)
-- **Justification:** [Why this priority level]
+Why this matters to users: [Explain the real-world impact in human terms.]
+
+I think this is probably happening because [your inference about the root cause]. The likely culprit is [probable file location], though [mention uncertainty if applicable].
+
+### [Next issue title]
+
+[Continue with same conversational pattern...]
+
+## What Needs to Change
+
+**For the UI team (ui-impl):**
+
+[Change description in natural language] - You'll want to look at [files]. Here's what needs to happen: [describe the change and why]. To know you've got it right: [list 2-3 specific things that should be true when done, written as sentences not checkboxes].
+
+**For the API team (api-impl):**
+
+[Same conversational pattern if backend changes needed...]
+
+**For the database team (db-modeler):**
+
+[Same pattern if schema changes needed...]
+
+## Accessibility Notes
+
+**Keyboard navigation:** [Describe findings in natural language. Example: "I could tab through all the buttons, but the focus indicator was almost invisible on the blue background. The order made sense though - form fields first, then action buttons."]
+
+**Focus and visual clarity:** [Conversational description of focus indicators, error messages, helper text, etc.]
+
+**Empty and error states:** [Natural description of what happens when there's no data or something goes wrong.]
+
+**Mobile experience:** [Describe mobile behavior like you're showing someone the screen. "On mobile, the touch targets felt cramped - I had trouble hitting the right filter button. Text was readable though."]
+
+## Questions and Uncertainties
+
+[Write these as actual questions you'd ask a teammate. Example: "I'm not sure if the service categories are supposed to match the spec exactly or if this is intentional. Could you clarify?" Rather than bullet points, write 2-3 sentences describing what additional info would help.]
+
+## Bottom Line
+
+Overall impact: [Low/Medium/High]
+Priority: [P1 critical / P2 important / P3 nice-to-have]
+
+[Explain why in 2-3 sentences. Example: "This is P1 because users literally can't complete the booking flow without seeing the price. The visual issues are annoying but the blocker is critical."]
 ```
 
 ---
