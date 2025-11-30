@@ -2,7 +2,7 @@
 
 import { useState, useEffect, Suspense, useCallback } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import type { ServiceCategory, TimeWindow, MatchLikelihood, DiscoveryResponse } from '../../types/discovery';
+import type { ServiceCategory, TimeWindow, DiscoveryResponse } from '../../types/discovery';
 
 const API_BASE_URL =
   process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:3001';
@@ -25,28 +25,10 @@ const TIME_WINDOW_LABELS: Record<TimeWindow, string> = {
   Custom: 'Any Time',
 };
 
-// Match likelihood colors (from design spec)
-const MATCH_COLORS: Record<MatchLikelihood, { bg: string; text: string; border: string }> = {
-  'Very High': { bg: 'bg-emerald-700', text: 'text-white', border: 'border-emerald-700' },
-  'High': { bg: 'bg-emerald-500', text: 'text-white', border: 'border-emerald-500' },
-  'Low': { bg: 'bg-amber-500', text: 'text-white', border: 'border-amber-500' },
-  'Very Low': { bg: 'bg-red-500', text: 'text-white', border: 'border-red-500' },
-};
-
 // Budget range constants
 const MIN_BUDGET = 30;
 const MAX_BUDGET = 200;
 const DEFAULT_BUDGET = 75;
-
-function getMatchLikelihood(budget: number): MatchLikelihood {
-  // For MVP, use simple thresholds based on typical service prices
-  // This provides visual feedback before actual API data
-  // Real match calculation happens on Live Offers with actual slot prices
-  if (budget >= 100) return 'Very High';
-  if (budget >= 70) return 'High';
-  if (budget >= 50) return 'Low';
-  return 'Very Low';
-}
 
 function BudgetSelectorContent() {
   const router = useRouter();
@@ -123,10 +105,6 @@ function BudgetSelectorContent() {
   useEffect(() => {
     fetchRecommendedPrice();
   }, [fetchRecommendedPrice]);
-
-  // Calculate match likelihood based on budget
-  const matchLikelihood = getMatchLikelihood(budget);
-  const matchColors = MATCH_COLORS[matchLikelihood];
 
   // Handle slider change
   const handleSliderChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -236,57 +214,88 @@ function BudgetSelectorContent() {
         </div>
 
         {/* Price Display Card */}
-        <div className="bg-white rounded-xl border border-slate-200 p-6 mb-4">
-          {loadingRecommended ? (
-            // Loading state while fetching recommended price
+        {loadingRecommended ? (
+          // Loading state while fetching recommended price
+          <div className="bg-emerald-50 rounded-2xl border-2 border-emerald-200 p-6 mb-4">
             <div className="animate-pulse">
-              <div className="h-4 bg-slate-200 rounded w-32 mb-3"></div>
-              <div className="h-12 bg-slate-200 rounded w-24 mb-3"></div>
-              <div className="h-4 bg-slate-200 rounded w-40"></div>
+              <div className="h-4 bg-emerald-200 rounded w-32 mb-3"></div>
+              <div className="h-12 bg-emerald-200 rounded w-24 mb-3"></div>
+              <div className="h-4 bg-emerald-200 rounded w-40"></div>
             </div>
-          ) : budget === recommendedPrice && recommendedPrice !== null ? (
-            <>
-              <div className="flex items-center gap-2 mb-2">
-                <svg
-                  className="w-5 h-5 text-slate-600"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
-                </svg>
-                <span className="text-sm font-medium text-slate-700">Recommended Price</span>
-              </div>
-              <div className="text-5xl font-bold text-slate-900 mb-2">
-                ${recommendedPrice}
-              </div>
-              <div className="flex items-center gap-1 text-sm text-slate-500">
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 17h8m0 0V9m0 8l-8-8-4 4-6-6" />
-                </svg>
-                <span>High match likelihood</span>
-              </div>
-            </>
-          ) : (
-            <>
-              <p className="text-sm text-slate-500 mb-2">Your Offer</p>
-              <div className="text-5xl font-bold text-slate-900 mb-4">
-                ${budget}
-              </div>
-              {/* Match Likelihood Badge */}
-              <div
-                className={`
-                  inline-flex items-center px-4 py-2 rounded-full text-sm font-medium
-                  ${matchColors.bg} ${matchColors.text}
-                `}
-                role="status"
-                aria-live="polite"
+          </div>
+        ) : budget === recommendedPrice && recommendedPrice !== null ? (
+          // Recommended Price - green outlined card
+          <div className="bg-emerald-50 rounded-2xl border-2 border-emerald-500 p-6 mb-4">
+            <div className="flex items-center gap-2 mb-2">
+              <svg
+                className="w-5 h-5 text-emerald-700"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
               >
-                {matchLikelihood} Match
-              </div>
-            </>
-          )}
-        </div>
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
+              </svg>
+              <span className="text-sm font-medium text-emerald-700">Recommended Price</span>
+            </div>
+            <div className="text-5xl font-bold text-slate-900 mb-2">
+              ${recommendedPrice}
+            </div>
+            <div className="flex items-center gap-1 text-sm text-emerald-700">
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+              </svg>
+              <span>High match likelihood</span>
+            </div>
+          </div>
+        ) : budget > (recommendedPrice ?? 0) ? (
+          // Your Bid above recommended - green filled card
+          <div className="bg-emerald-600 rounded-2xl p-6 mb-4">
+            <div className="flex items-center gap-2 mb-2">
+              <svg
+                className="w-5 h-5 text-white"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
+              </svg>
+              <span className="text-sm font-medium text-white">Your Bid</span>
+            </div>
+            <div className="text-5xl font-bold text-white mb-2">
+              ${budget}
+            </div>
+            <div className="flex items-center gap-1 text-sm text-white">
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+              </svg>
+              <span>Very high match likelihood</span>
+            </div>
+          </div>
+        ) : (
+          // Your Bid below recommended - orange outlined card
+          <div className="bg-orange-50 rounded-2xl border-2 border-orange-400 p-6 mb-4">
+            <div className="flex items-center gap-2 mb-2">
+              <svg
+                className="w-5 h-5 text-orange-500"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
+              </svg>
+              <span className="text-sm font-medium text-orange-500">Your Bid</span>
+            </div>
+            <div className="text-5xl font-bold text-orange-500 mb-2">
+              ${budget}
+            </div>
+            <div className="flex items-center gap-1 text-sm text-orange-500">
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+              </svg>
+              <span>Very low match likelihood</span>
+            </div>
+          </div>
+        )}
 
         {/* Budget Slider */}
         <div className="mb-6">
