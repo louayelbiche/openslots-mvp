@@ -35,3 +35,6 @@ apps/api/.DS_Store
 dist/
 apps/api/dist/
 *.tsbuildinfo
+
+# Claude agent lock files (for parallel execution)
+claude/.locks/

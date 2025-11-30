@@ -82,6 +82,125 @@ For session history management:
 
 ---
 
+## 0.1 MANDATORY: File Locking for Parallel Execution
+
+**CRITICAL REQUIREMENT**: Before editing ANY files, you must acquire file locks to prevent conflicts with other parallel agent invocations.
+
+### Lock File Location
+
+All lock files are stored in: `claude/.locks/`
+
+Lock files use the format: `{sanitized-file-path}.lock`
+- Example: `apps/api/src/app.controller.ts` → `claude/.locks/apps--api--src--app.controller.ts.lock`
+
+### Lock File Contents
+
+Each lock file contains JSON:
+```json
+{
+  "agent": "build-lead",
+  "sessionId": "session-XX",
+  "timestamp": "ISO 8601 timestamp",
+  "pid": "process identifier or unique session ID",
+  "files": ["list", "of", "files", "being", "edited"]
+}
+```
+
+### Pre-Edit Protocol (MANDATORY)
+
+Before making ANY file edits, you MUST:
+
+1. **Identify all files to edit** from your implementation plan
+
+2. **Check for existing locks**:
+   ```bash
+   ls claude/.locks/ 2>/dev/null || echo "No locks directory"
+   ```
+
+3. **For each file you plan to edit**, check if a lock exists:
+   - Sanitize the path: replace `/` with `--`
+   - Check: `claude/.locks/{sanitized-path}.lock`
+
+4. **If ANY lock exists for files you need**:
+   - Read the lock file to identify the conflicting agent/session
+   - **STOP IMMEDIATELY**
+   - Display a warning to the user:
+     ```
+     ⚠️ FILE LOCK CONFLICT DETECTED
+
+     Cannot proceed - the following files are locked by another agent:
+     - {file_path} (locked by: {agent}, session: {sessionId}, since: {timestamp})
+
+     Options:
+     1. Wait for the other agent to complete and release locks
+     2. Ask the user to manually remove stale locks if the other session crashed
+     3. Choose different files that don't conflict
+     ```
+   - Do NOT proceed until locks are cleared
+
+5. **If no conflicts**, create lock files:
+   ```bash
+   mkdir -p claude/.locks
+   ```
+   Then create a lock file for each file you'll edit.
+
+### Lock Acquisition Example
+
+Before editing `apps/api/src/app.controller.ts` and `apps/web/src/app/page.tsx`:
+
+```bash
+# Check for conflicts
+cat claude/.locks/apps--api--src--app.controller.ts.lock 2>/dev/null
+cat claude/.locks/apps--web--src--app--page.tsx.lock 2>/dev/null
+
+# If no conflicts, create locks
+echo '{"agent":"build-lead","sessionId":"session-01","timestamp":"2025-11-30T10:00:00Z","files":["apps/api/src/app.controller.ts","apps/web/src/app/page.tsx"]}' > claude/.locks/apps--api--src--app.controller.ts.lock
+echo '{"agent":"build-lead","sessionId":"session-01","timestamp":"2025-11-30T10:00:00Z","files":["apps/api/src/app.controller.ts","apps/web/src/app/page.tsx"]}' > claude/.locks/apps--web--src--app--page.tsx.lock
+```
+
+### Lock Release Protocol (MANDATORY)
+
+After completing ALL edits (success or failure), you MUST:
+
+1. **Remove all lock files you created**:
+   ```bash
+   rm -f claude/.locks/apps--api--src--app.controller.ts.lock
+   rm -f claude/.locks/apps--web--src--app--page.tsx.lock
+   ```
+
+2. **Verify cleanup**:
+   ```bash
+   ls claude/.locks/
+   ```
+
+### Stale Lock Handling
+
+Locks are considered potentially stale if:
+- Timestamp is older than 1 hour
+- The session ID doesn't match any active session in `claude/history/`
+
+If you encounter a potentially stale lock:
+1. Warn the user about the stale lock
+2. Ask for permission to remove it
+3. Only remove with explicit user approval
+
+### Sub-Agent Lock Inheritance
+
+When delegating to sub-agents:
+- You (build-lead) acquire locks for ALL files the sub-agent will edit
+- Sub-agents do NOT manage locks themselves
+- You release locks only after the sub-agent completes
+- Include locked files in the Task Brief so sub-agents know their scope
+
+### Enforcement
+
+- **No edits without locks**: You must never edit a file without first acquiring its lock
+- **No lock stealing**: Never remove another agent's lock without user permission
+- **Always clean up**: Lock release is as mandatory as lock acquisition
+- **Fail fast**: If lock acquisition fails, stop immediately—do not proceed with partial work
+
+---
+
 ## 1. Scope and Responsibilities
 
 As build lead, you:
