@@ -228,7 +228,7 @@ function BudgetSelectorContent() {
         {/* Price Display Card */}
         {loadingRecommended || budget === null ? (
           // Loading state while fetching recommended price
-          <div className="bg-emerald-50 rounded-2xl border-2 border-emerald-200 p-6 mb-4">
+          <div className="bg-emerald-50 rounded-2xl border-2 border-emerald-200 p-6 mb-4 min-h-[156px]">
             <div className="animate-pulse">
               <div className="h-4 bg-emerald-200 rounded w-32 mb-3"></div>
               <div className="h-12 bg-emerald-200 rounded w-24 mb-3"></div>
@@ -237,7 +237,7 @@ function BudgetSelectorContent() {
           </div>
         ) : budget === recommendedPrice && recommendedPrice !== null ? (
           // Recommended Price - green outlined card
-          <div className="bg-emerald-50 rounded-2xl border-2 border-emerald-500 p-6 mb-4">
+          <div className="bg-emerald-50 rounded-2xl border-2 border-emerald-500 p-6 mb-4 min-h-[156px]">
             <div className="flex items-center gap-2 mb-2">
               <svg
                 className="w-5 h-5 text-emerald-700"
@@ -261,7 +261,7 @@ function BudgetSelectorContent() {
           </div>
         ) : budget > (recommendedPrice ?? 0) ? (
           // Your Bid above recommended - green filled card
-          <div className="bg-emerald-600 rounded-2xl p-6 mb-4">
+          <div className="bg-emerald-600 rounded-2xl p-6 mb-4 min-h-[156px]">
             <div className="flex items-center gap-2 mb-2">
               <svg
                 className="w-5 h-5 text-white"
@@ -285,7 +285,7 @@ function BudgetSelectorContent() {
           </div>
         ) : (
           // Your Bid below recommended - orange outlined card
-          <div className="bg-orange-50 rounded-2xl border-2 border-orange-400 p-6 mb-4">
+          <div className="bg-orange-50 rounded-2xl border-2 border-orange-400 p-6 mb-4 min-h-[156px]">
             <div className="flex items-center gap-2 mb-2">
               <svg
                 className="w-5 h-5 text-orange-500"
