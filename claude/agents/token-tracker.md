@@ -1,4 +1,4 @@
-# usage-tracker.md
+# token-tracker.md
 
 Token usage tracking and optimization agent for the OpenSlots repo.
 
