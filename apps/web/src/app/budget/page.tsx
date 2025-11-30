@@ -25,11 +25,6 @@ const TIME_WINDOW_LABELS: Record<TimeWindow, string> = {
   Custom: 'Any Time',
 };
 
-// Budget range constants
-const MIN_BUDGET = 30;
-const MAX_BUDGET = 200;
-const DEFAULT_BUDGET = 75;
-
 function BudgetSelectorContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -40,10 +35,12 @@ function BudgetSelectorContent() {
   const zipCode = searchParams.get('zipCode');
   const timeWindow = searchParams.get('timeWindow') as TimeWindow | null;
 
-  const [budget, setBudget] = useState(DEFAULT_BUDGET);
-  const [inputValue, setInputValue] = useState(DEFAULT_BUDGET.toString());
+  const [budget, setBudget] = useState<number | null>(null);
+  const [inputValue, setInputValue] = useState('');
   const [inputError, setInputError] = useState('');
   const [recommendedPrice, setRecommendedPrice] = useState<number | null>(null);
+  const [minPrice, setMinPrice] = useState<number | null>(null);
+  const [maxPrice, setMaxPrice] = useState<number | null>(null);
   const [loadingRecommended, setLoadingRecommended] = useState(true);
 
   // Redirect if missing required params
@@ -74,7 +71,7 @@ function BudgetSelectorContent() {
 
       if (response.ok) {
         const data = (await response.json()) as DiscoveryResponse;
-        // Calculate average price across all slots from all providers
+        // Calculate min, max, and average price across all slots from all providers
         const allPrices: number[] = [];
         for (const provider of data.providers || []) {
           for (const slot of provider.slots) {
@@ -83,16 +80,25 @@ function BudgetSelectorContent() {
         }
 
         if (allPrices.length > 0) {
-          const avgCents = allPrices.reduce((a, b) => a + b, 0) / allPrices.length;
-          // Convert to dollars and round to nearest $5
-          const avgDollars = Math.round(avgCents / 100 / 5) * 5;
+          // Convert cents to dollars
+          const pricesInDollars = allPrices.map(p => p / 100);
+
+          // Calculate min (floor to nearest $5), max (ceil to nearest $5), avg (round to nearest $5)
+          const minDollars = Math.floor(Math.min(...pricesInDollars) / 5) * 5;
+          const maxDollars = Math.ceil(Math.max(...pricesInDollars) / 5) * 5;
+          const avgDollars = Math.round((pricesInDollars.reduce((a, b) => a + b, 0) / pricesInDollars.length) / 5) * 5;
+
+          // Ensure min is at least $5 and max is at least min + $5
+          const finalMin = Math.max(5, minDollars);
+          const finalMax = Math.max(finalMin + 5, maxDollars);
+
+          setMinPrice(finalMin);
+          setMaxPrice(finalMax);
           setRecommendedPrice(avgDollars);
 
-          // Set as initial budget if within range
-          if (avgDollars >= MIN_BUDGET && avgDollars <= MAX_BUDGET) {
-            setBudget(avgDollars);
-            setInputValue(avgDollars.toString());
-          }
+          // Set initial budget to recommended price
+          setBudget(avgDollars);
+          setInputValue(avgDollars.toString());
         }
       }
     } catch (err) {
@@ -119,29 +125,33 @@ function BudgetSelectorContent() {
     const raw = e.target.value.replace(/[^0-9]/g, '');
     setInputValue(raw);
 
+    if (minPrice === null || maxPrice === null) return;
+
     const value = parseInt(raw, 10);
     if (!isNaN(value)) {
-      if (value >= MIN_BUDGET && value <= MAX_BUDGET) {
+      if (value >= minPrice && value <= maxPrice) {
         setBudget(value);
         setInputError('');
-      } else if (value < MIN_BUDGET) {
-        setInputError(`Minimum is $${MIN_BUDGET}`);
-      } else if (value > MAX_BUDGET) {
-        setInputError(`Maximum is $${MAX_BUDGET}`);
+      } else if (value < minPrice) {
+        setInputError(`Minimum is $${minPrice}`);
+      } else if (value > maxPrice) {
+        setInputError(`Maximum is $${maxPrice}`);
       }
     }
   };
 
   // Handle input blur - clamp value
   const handleInputBlur = () => {
+    if (minPrice === null || maxPrice === null) return;
+
     const value = parseInt(inputValue, 10);
-    if (isNaN(value) || value < MIN_BUDGET) {
-      setBudget(MIN_BUDGET);
-      setInputValue(MIN_BUDGET.toString());
+    if (isNaN(value) || value < minPrice) {
+      setBudget(minPrice);
+      setInputValue(minPrice.toString());
       setInputError('');
-    } else if (value > MAX_BUDGET) {
-      setBudget(MAX_BUDGET);
-      setInputValue(MAX_BUDGET.toString());
+    } else if (value > maxPrice) {
+      setBudget(maxPrice);
+      setInputValue(maxPrice.toString());
       setInputError('');
     } else {
       setBudget(value);
@@ -152,6 +162,8 @@ function BudgetSelectorContent() {
 
   // Handle continue
   const handleContinue = () => {
+    if (budget === null) return;
+
     const params = new URLSearchParams({
       service: service!,
       city: city!,
@@ -214,7 +226,7 @@ function BudgetSelectorContent() {
         </div>
 
         {/* Price Display Card */}
-        {loadingRecommended ? (
+        {loadingRecommended || budget === null ? (
           // Loading state while fetching recommended price
           <div className="bg-emerald-50 rounded-2xl border-2 border-emerald-200 p-6 mb-4">
             <div className="animate-pulse">
@@ -298,42 +310,44 @@ function BudgetSelectorContent() {
         )}
 
         {/* Budget Slider */}
-        <div className="mb-6">
-          <div className="flex justify-between text-xs text-slate-500 mb-2">
-            <span>${MIN_BUDGET}</span>
-            <span>${MAX_BUDGET}</span>
-          </div>
+        {minPrice !== null && maxPrice !== null && budget !== null && (
+          <div className="mb-6">
+            <div className="flex justify-between text-xs text-slate-500 mb-2">
+              <span>${minPrice}</span>
+              <span>${maxPrice}</span>
+            </div>
 
-          <input
-            type="range"
-            min={MIN_BUDGET}
-            max={MAX_BUDGET}
-            step={1}
-            value={budget}
-            onChange={handleSliderChange}
-            className="
-              w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer
-              [&::-webkit-slider-thumb]:appearance-none
-              [&::-webkit-slider-thumb]:w-6
-              [&::-webkit-slider-thumb]:h-6
-              [&::-webkit-slider-thumb]:bg-slate-900
-              [&::-webkit-slider-thumb]:rounded-full
-              [&::-webkit-slider-thumb]:shadow-lg
-              [&::-webkit-slider-thumb]:cursor-pointer
-              [&::-moz-range-thumb]:w-6
-              [&::-moz-range-thumb]:h-6
-              [&::-moz-range-thumb]:bg-slate-900
-              [&::-moz-range-thumb]:border-0
-              [&::-moz-range-thumb]:rounded-full
-              [&::-moz-range-thumb]:shadow-lg
-              [&::-moz-range-thumb]:cursor-pointer
-            "
-            aria-label="Budget slider"
-            aria-valuemin={MIN_BUDGET}
-            aria-valuemax={MAX_BUDGET}
-            aria-valuenow={budget}
-          />
-        </div>
+            <input
+              type="range"
+              min={minPrice}
+              max={maxPrice}
+              step={1}
+              value={budget}
+              onChange={handleSliderChange}
+              className="
+                w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer
+                [&::-webkit-slider-thumb]:appearance-none
+                [&::-webkit-slider-thumb]:w-6
+                [&::-webkit-slider-thumb]:h-6
+                [&::-webkit-slider-thumb]:bg-slate-900
+                [&::-webkit-slider-thumb]:rounded-full
+                [&::-webkit-slider-thumb]:shadow-lg
+                [&::-webkit-slider-thumb]:cursor-pointer
+                [&::-moz-range-thumb]:w-6
+                [&::-moz-range-thumb]:h-6
+                [&::-moz-range-thumb]:bg-slate-900
+                [&::-moz-range-thumb]:border-0
+                [&::-moz-range-thumb]:rounded-full
+                [&::-moz-range-thumb]:shadow-lg
+                [&::-moz-range-thumb]:cursor-pointer
+              "
+              aria-label="Budget slider"
+              aria-valuemin={minPrice}
+              aria-valuemax={maxPrice}
+              aria-valuenow={budget}
+            />
+          </div>
+        )}
 
         {/* Numeric Input */}
         <div className="mb-6">
