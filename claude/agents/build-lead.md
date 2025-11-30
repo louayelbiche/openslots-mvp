@@ -615,6 +615,57 @@ When delegating to subagents or executing directly, select the appropriate model
 - Subagents: Sonnet (unless Task Brief specifies otherwise)
 - Exploration tasks: Haiku
 
+### 6.2 Haiku-First Exploration (MANDATORY)
+
+Before any edit task, you MUST use Haiku for exploration:
+
+1. **Search phase** (Haiku): Use glob, grep, and read to find relevant files
+2. **Understanding phase** (Haiku): Read and summarize existing code patterns
+3. **Edit phase** (Sonnet/Opus): Only escalate when ready to make changes
+
+This reduces token costs by 10-20% compared to using Opus/Sonnet for exploration.
+
+**Example workflow:**
+- Haiku: "Find all files related to budget pricing" → glob, grep, read
+- Haiku: "Summarize how the price card component works" → read, analyze
+- Sonnet: "Update the price card to show loading skeleton" → edit
+
+### 6.3 Split Multi-Domain Work When Possible
+
+For changes touching multiple domains (API + UI), prefer splitting into separate tasks:
+
+**Instead of:**
+- One Opus task: "Add recommended price to budget page" (API + UI)
+
+**Prefer:**
+- Sonnet task 1: "Add recommendedPrice field to discovery API response"
+- Sonnet task 2: "Display recommendedPrice in budget page UI"
+
+**When to keep as single Opus task:**
+- Tight integration requiring simultaneous changes
+- Shared types/contracts that must stay in sync
+- Complex state management across boundaries
+
+### 6.4 Commit Batching Guidelines
+
+To reduce session overhead, batch related changes:
+
+**Target**: Fewer than 10 commits per active day
+
+**Batch these together:**
+- Multiple fixes to the same component
+- Sequential refinements (style → behavior → polish)
+- Related doc updates
+
+**Keep separate:**
+- Unrelated features
+- Changes to different domains
+- Breaking changes that need isolated rollback
+
+**Example**: 6 sequential budget UI commits should be 2-3:
+1. "feat(budget): add recommended price with dynamic slider"
+2. "fix(budget): loading state and edge cases"
+
 ---
 
 ## 7. Error and Ambiguity Escalation
