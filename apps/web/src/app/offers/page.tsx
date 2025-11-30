@@ -149,6 +149,7 @@ function LiveOffersContent() {
   const timeWindow = searchParams.get('timeWindow') as TimeWindow | null;
   const budgetParam = searchParams.get('budget');
   const userBid = budgetParam ? parseInt(budgetParam, 10) : 75;
+  const serviceType = searchParams.get('serviceType');
 
   // State
   const [providers, setProviders] = useState<Provider[]>([]);
@@ -158,14 +159,14 @@ function LiveOffersContent() {
 
   // Redirect if missing required params
   useEffect(() => {
-    if (!service || !city || !timeWindow) {
+    if (!service || !city || !timeWindow || !serviceType) {
       router.push('/');
     }
-  }, [service, city, timeWindow, router]);
+  }, [service, city, timeWindow, serviceType, router]);
 
   // Fetch providers from API
   const fetchProviders = useCallback(async () => {
-    if (!service || !city || !timeWindow) return;
+    if (!service || !city || !timeWindow || !serviceType) return;
 
     setLoading(true);
     setError(null);
@@ -181,6 +182,7 @@ function LiveOffersContent() {
           city,
           zipCode: zipCode || undefined,
           timeWindow,
+          serviceType, // Filter by specific service type
         }),
       });
 
@@ -196,7 +198,7 @@ function LiveOffersContent() {
     } finally {
       setLoading(false);
     }
-  }, [service, city, zipCode, timeWindow]);
+  }, [service, city, zipCode, timeWindow, serviceType]);
 
   useEffect(() => {
     fetchProviders();
@@ -232,7 +234,7 @@ function LiveOffersContent() {
   };
 
   // Show nothing while redirecting if params are missing
-  if (!service || !city || !timeWindow) {
+  if (!service || !city || !timeWindow || !serviceType) {
     return null;
   }
 
@@ -267,7 +269,7 @@ function LiveOffersContent() {
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <span className="bg-slate-100 text-slate-700 px-3 py-1 rounded-full text-sm">
-                {SERVICE_LABELS[service]}
+                {serviceType}
               </span>
             </div>
             <div className="flex items-center gap-2">

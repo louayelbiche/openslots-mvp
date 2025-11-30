@@ -10,10 +10,76 @@ import {
   ProviderDto,
   SlotDto,
 } from "./dto/discovery-response.dto";
+import { ServiceTypesRequestDto } from "./dto/service-types-request.dto";
+import {
+  ServiceTypesResponseDto,
+  ServiceTypeDto,
+} from "./dto/service-types-response.dto";
 
 @Injectable()
 export class DiscoveryService {
   constructor(private prisma: PrismaService) {}
+
+  async getServiceTypes(
+    request: ServiceTypesRequestDto
+  ): Promise<ServiceTypesResponseDto> {
+    if (!request.serviceCategory) {
+      throw new BadRequestException("serviceCategory is required");
+    }
+    if (!request.city) {
+      throw new BadRequestException("city is required");
+    }
+
+    // Get all services with OPEN slots in the given category and city
+    const services = await this.prisma.service.findMany({
+      where: {
+        category: request.serviceCategory,
+        provider: {
+          city: {
+            equals: request.city,
+            mode: "insensitive",
+          },
+        },
+      },
+      include: {
+        slots: {
+          where: {
+            status: SlotStatus.OPEN,
+          },
+        },
+      },
+    });
+
+    // Group by service name and count slots
+    const serviceTypeMap = new Map<
+      string,
+      { durationMin: number; slotCount: number }
+    >();
+
+    for (const service of services) {
+      const existing = serviceTypeMap.get(service.name);
+      if (existing) {
+        existing.slotCount += service.slots.length;
+      } else {
+        serviceTypeMap.set(service.name, {
+          durationMin: service.durationMin,
+          slotCount: service.slots.length,
+        });
+      }
+    }
+
+    // Convert to array and filter out service types with no available slots
+    const serviceTypes: ServiceTypeDto[] = Array.from(serviceTypeMap.entries())
+      .filter(([_, data]) => data.slotCount > 0)
+      .map(([name, data]) => ({
+        name,
+        durationMin: data.durationMin,
+        slotCount: data.slotCount,
+      }))
+      .sort((a, b) => a.name.localeCompare(b.name));
+
+    return { serviceTypes };
+  }
 
   async discover(request: DiscoveryRequestDto): Promise<DiscoveryResponseDto> {
     // Step 1: Validate inputs
@@ -25,10 +91,11 @@ export class DiscoveryService {
       request.serviceCategory
     );
 
-    // Step 3: Filter slots by time window and transform data
+    // Step 3: Filter slots by time window, service type, and transform data
     const providersWithSlots = this.filterAndTransformProviders(
       providers,
-      request.timeWindow
+      request.timeWindow,
+      request.serviceType
     );
 
     // Step 4: Sort providers
@@ -75,17 +142,28 @@ export class DiscoveryService {
 
   private filterAndTransformProviders(
     providers: any[],
-    timeWindow?: TimeWindow
+    timeWindow?: TimeWindow,
+    serviceType?: string
   ): ProviderDto[] {
     const result: ProviderDto[] = [];
 
     for (const provider of providers) {
-      // Filter slots by time window (if provided), considering provider's city timezone
-      const filteredSlots = timeWindow
-        ? provider.slots.filter((slot: any) =>
-            this.isSlotInTimeWindow(slot.startTime, timeWindow, provider.city)
-          )
-        : provider.slots;
+      // Start with all slots
+      let filteredSlots = provider.slots;
+
+      // Filter by service type if provided
+      if (serviceType) {
+        filteredSlots = filteredSlots.filter(
+          (slot: any) => slot.service.name === serviceType
+        );
+      }
+
+      // Filter by time window if provided
+      if (timeWindow) {
+        filteredSlots = filteredSlots.filter((slot: any) =>
+          this.isSlotInTimeWindow(slot.startTime, timeWindow, provider.city)
+        );
+      }
 
       // Skip providers with no valid slots
       if (filteredSlots.length === 0) {

@@ -34,6 +34,7 @@ function BudgetSelectorContent() {
   const city = searchParams.get('city');
   const zipCode = searchParams.get('zipCode');
   const timeWindow = searchParams.get('timeWindow') as TimeWindow | null;
+  const serviceType = searchParams.get('serviceType');
 
   const [budget, setBudget] = useState<number | null>(null);
   const [inputValue, setInputValue] = useState('');
@@ -45,18 +46,18 @@ function BudgetSelectorContent() {
 
   // Redirect if missing required params
   useEffect(() => {
-    if (!service || !city || !timeWindow) {
+    if (!service || !city || !timeWindow || !serviceType) {
       router.push('/');
     }
-  }, [service, city, timeWindow, router]);
+  }, [service, city, timeWindow, serviceType, router]);
 
-  // Fetch recommended price from discovery API (all slots for service+city, no time filter)
+  // Fetch recommended price from discovery API (all slots for serviceType+city, no time filter)
   const fetchRecommendedPrice = useCallback(async () => {
-    if (!service || !city) return;
+    if (!service || !city || !serviceType) return;
 
     setLoadingRecommended(true);
     try {
-      // Fetch ALL slots for this service+city (no timeWindow filter)
+      // Fetch ALL slots for this serviceType+city (no timeWindow filter)
       // to calculate average price across all time slots
       const response = await fetch(`${API_BASE_URL}/api/discovery`, {
         method: 'POST',
@@ -65,6 +66,7 @@ function BudgetSelectorContent() {
           serviceCategory: service,
           city,
           zipCode: zipCode || undefined,
+          serviceType, // Filter by specific service type
           // No timeWindow - returns all slots for accurate recommended price
         }),
       });
@@ -106,7 +108,7 @@ function BudgetSelectorContent() {
     } finally {
       setLoadingRecommended(false);
     }
-  }, [service, city, zipCode]);
+  }, [service, city, zipCode, serviceType]);
 
   useEffect(() => {
     fetchRecommendedPrice();
@@ -169,6 +171,7 @@ function BudgetSelectorContent() {
       city: city!,
       timeWindow: timeWindow!,
       budget: budget.toString(),
+      serviceType: serviceType!,
     });
 
     if (zipCode) {
@@ -179,7 +182,7 @@ function BudgetSelectorContent() {
   };
 
   // Show nothing while redirecting if params are missing
-  if (!service || !city || !timeWindow) {
+  if (!service || !city || !timeWindow || !serviceType) {
     return null;
   }
 
@@ -213,7 +216,7 @@ function BudgetSelectorContent() {
         <div className="bg-white rounded-xl border border-slate-200 p-4 mb-6">
           <div className="flex flex-wrap gap-2 text-sm">
             <span className="bg-slate-100 text-slate-700 px-3 py-1 rounded-full">
-              {SERVICE_LABELS[service]}
+              {serviceType}
             </span>
             <span className="bg-slate-100 text-slate-700 px-3 py-1 rounded-full">
               {city}

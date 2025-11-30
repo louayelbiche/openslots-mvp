@@ -67,7 +67,7 @@ export default function IndexScreen() {
       params.set('zipCode', zipCode.trim());
     }
 
-    router.push(`/budget?${params.toString()}`);
+    router.push(`/service-type?${params.toString()}`);
   };
 
   return (

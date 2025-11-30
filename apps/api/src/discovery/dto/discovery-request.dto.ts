@@ -7,4 +7,5 @@ export class DiscoveryRequestDto {
   city: string;
   zipCode?: string;
   timeWindow?: TimeWindow; // Optional - if not provided, returns all slots
+  serviceType?: string; // Optional - service name to filter by (e.g., "Blowout", "Swedish Massage")
 }
