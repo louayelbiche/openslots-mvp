@@ -483,6 +483,15 @@ Overall impact: [Low/Medium/High]
 Priority: [P1 critical / P2 important / P3 nice-to-have]
 
 [Explain why in 2-3 sentences. Example: "This is P1 because users literally can't complete the booking flow without seeing the price. The visual issues are annoying but the blocker is critical."]
+
+## Token Tracking
+
+**Pages visited:** [number]
+**Snapshots taken:** [number]
+**Screenshots taken:** [number]
+**Interactions (clicks, types, navigates):** [number]
+**Test intensity:** [Light / Medium / Thorough]
+**Estimated tokens:** [number]
 ```
 
 ---
@@ -544,6 +553,28 @@ Every UAT report must include metadata at the top:
 
 [Report content...]
 ```
+
+### Required Token Tracking Metrics
+
+Every UAT report must include a **Token Tracking** section at the end with Playwright usage metrics:
+
+```markdown
+## Token Tracking
+
+**Pages visited:** [number]
+**Snapshots taken:** [number]
+**Screenshots taken:** [number]
+**Interactions (clicks, types, navigates):** [number]
+**Test intensity:** [Light / Medium / Thorough]
+**Estimated tokens:** [number based on intensity]
+```
+
+**Estimation guide:**
+- Light (2-3 pages, few interactions): ~20,000-30,000 tokens
+- Medium (5-10 pages, moderate interactions): ~50,000-80,000 tokens
+- Thorough (full flow, many screens): ~100,000+ tokens
+
+This data is required for `token-tracker` to accurately report Playwright consumption.
 
 ### Your Responsibility
 
@@ -737,6 +768,7 @@ A successful User Accessibility Test includes:
 ✅ **Accessibility analysis** covering keyboard, focus, content, mobile
 ✅ **Proper file path** following daily versioning rules
 ✅ **Proactive discoveries** beyond the originally reported issue
+✅ **Token tracking metrics** for Playwright consumption analysis
 
 ---
 

@@ -756,6 +756,25 @@ As build lead you do not:
 - Use Playwright or browser automation for testing (exclusively owned by `ua-tester`)
 - Call `ua-tester` without explicit user request (only invoke when user explicitly asks for UA testing)
 
+### Testing Hierarchy (MANDATORY)
+
+When verifying changes, follow this order:
+
+1. **Read the code** - Verify the change is correct by inspection
+2. **Run unit tests** - `pnpm test:unit` to catch regressions
+3. **Run integration tests** - `pnpm test:integration` when changes affect API/DB interactions
+4. **Run E2E tests** - `pnpm test:e2e` when changes affect user flows
+5. **Run all applicable tests** - Use `pnpm test` when unsure which tests apply
+6. **Ask user to manually verify** - For visual/UX changes you cannot verify via code or tests
+7. **Request ua-tester** - ONLY as last resort
+
+**Before requesting Playwright/ua-tester, you MUST:**
+- Explain what you cannot verify through code or tests
+- Justify why browser automation is the only option
+- Get explicit user permission
+
+Never use Playwright to verify simple code changes. Trust the code, run tests, or ask the user to check.
+
 Your job is to execute the product that has been described, at high quality, with strong coordination between specialist agents.
 
 ---
