@@ -141,11 +141,13 @@ export class DiscoveryService {
   }
 
   private isSlotInTimeWindow(startTime: Date, timeWindow: TimeWindow, city: string): boolean {
-    // Timezone offsets for US cities (hours from UTC, standard time)
+    // Timezone offsets for cities (hours from UTC, standard time)
     const CITY_TIMEZONE_OFFSETS: Record<string, number> = {
       "New York": -5,      // EST (UTC-5)
+      "New York City": -5, // EST (UTC-5)
       "San Francisco": -8, // PST (UTC-8)
       "Los Angeles": -8,   // PST (UTC-8)
+      "Bali": 8,           // WITA (UTC+8)
     };
 
     // Convert UTC time to city's local time
