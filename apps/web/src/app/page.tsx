@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import type { ServiceCategory, TimeWindow } from '../types/discovery';
+import { CityDropdown, CITIES } from '../components/CityDropdown';
 
 // Service categories with display info
 const SERVICE_CATEGORIES: Array<{
@@ -38,23 +39,27 @@ export default function IndexScreen() {
   const [timeWindow, setTimeWindow] = useState<TimeWindow | null>(null);
   const [cityError, setCityError] = useState('');
 
-  const isFormValid = selectedService && city.trim() && timeWindow;
+  const isFormValid = selectedService && city && timeWindow;
 
   const handleSubmit = () => {
     if (!isFormValid) return;
 
-    // Validate city is not empty
-    if (!city.trim()) {
-      setCityError('Please enter a valid city');
+    // Validate city is selected
+    if (!city) {
+      setCityError('Please select a city');
       return;
     }
 
     setCityError('');
 
+    // Get the city label for the API
+    const selectedCityObj = CITIES.find((c) => c.value === city);
+    const cityLabel = selectedCityObj?.label || city;
+
     // Build query params
     const params = new URLSearchParams({
       service: selectedService,
-      city: city.trim(),
+      city: cityLabel,
       timeWindow: timeWindow,
     });
 
@@ -113,33 +118,15 @@ export default function IndexScreen() {
             Location
           </h2>
           <div className="flex gap-3">
-            <div className="flex-1">
-              <label htmlFor="city" className="sr-only">
-                City
-              </label>
-              <input
-                id="city"
-                type="text"
-                placeholder="City (e.g., New York)"
-                value={city}
-                onChange={(e) => {
-                  setCity(e.target.value);
-                  if (cityError) setCityError('');
-                }}
-                className={`
-                  w-full px-4 py-3 rounded-xl border-2 text-sm
-                  placeholder:text-slate-400
-                  focus:outline-none focus:ring-2 focus:ring-slate-900 focus:border-transparent
-                  ${cityError ? 'border-orange-400' : 'border-slate-200'}
-                `}
-                aria-describedby={cityError ? 'city-error' : undefined}
-              />
-              {cityError && (
-                <p id="city-error" className="mt-1 text-xs text-orange-600">
-                  {cityError}
-                </p>
-              )}
-            </div>
+            <CityDropdown
+              value={city}
+              onChange={(newCity) => {
+                setCity(newCity);
+                if (cityError) setCityError('');
+              }}
+              error={cityError}
+              placeholder="Search for a city..."
+            />
             <div className="w-28">
               <label htmlFor="zipCode" className="sr-only">
                 Zip Code (optional)
@@ -218,7 +205,7 @@ export default function IndexScreen() {
         {!isFormValid && (
           <p className="text-center text-xs text-slate-500 mt-3">
             {!selectedService && 'Select a service, '}
-            {!city.trim() && 'enter your city, '}
+            {!city && 'choose your city, '}
             {!timeWindow && 'choose a time window'}
             {' to continue'}
           </p>
