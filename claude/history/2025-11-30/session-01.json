@@ -86,6 +86,16 @@
       "file": "claude/agents/build-lead.md",
       "changeType": "behavior change",
       "reason": "Added Testing Hierarchy: 1) read code, 2) run tests, 3) ask user, 4) request ua-tester as last resort with justification"
+    },
+    {
+      "file": ".playwright-mcp/",
+      "changeType": "kept",
+      "reason": "Screenshots stay in .playwright-mcp/ - reverted rename to screenshots/"
+    },
+    {
+      "file": ".gitignore",
+      "changeType": "behavior change",
+      "reason": "Added .playwright-mcp/ to gitignore"
     }
   ],
   "summary": "Improved token tracking system: renamed agent, simplified spec to remove unimplementable telemetry, generated usage report, added model selection guidelines, made session tracking mandatory, added batching guidance. Fixed report naming convention to versioned format.",

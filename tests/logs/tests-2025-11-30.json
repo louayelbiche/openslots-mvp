@@ -1,0 +1,97 @@
+[
+  {
+    "timestamp": "2025-11-30T18:14:41Z",
+    "command": "pnpm test",
+    "environment": {
+      "node": "v20.x.x",
+      "pnpm": "10.23.0",
+      "turbo": "2.6.1"
+    },
+    "packages": {
+      "web": {
+        "runner": "vitest",
+        "total": 102,
+        "passed": 102,
+        "failed": 0,
+        "duration": "2.54s",
+        "testFiles": [
+          "src/components/MatchBadge.test.tsx (35 tests)",
+          "src/components/SlotItem.test.tsx (42 tests)",
+          "src/components/ProviderCard.test.tsx (25 tests)"
+        ]
+      },
+      "api": {
+        "runner": "jest",
+        "total": 48,
+        "passed": 17,
+        "failed": 31,
+        "duration": "3.897s",
+        "testFiles": [
+          "src/app.controller.spec.ts (PASS)",
+          "src/discovery/discovery.controller.spec.ts (PASS)",
+          "src/discovery/discovery.service.spec.ts (FAIL - 31 failures)"
+        ]
+      }
+    },
+    "summary": {
+      "total": 150,
+      "passed": 119,
+      "failed": 31,
+      "skipped": 0,
+      "duration": "4.919s"
+    },
+    "failures": [
+      {
+        "file": "src/discovery/discovery.service.spec.ts",
+        "count": 31,
+        "error": "TypeError: this.prisma.$queryRaw is not a function",
+        "location": "discovery/discovery.service.ts:226:58",
+        "cause": "Mock PrismaService missing $queryRaw method"
+      }
+    ]
+  },
+  {
+    "timestamp": "2025-11-30T18:21:57Z",
+    "command": "pnpm test",
+    "environment": {
+      "node": "v20.x.x",
+      "pnpm": "10.23.0",
+      "turbo": "2.6.1"
+    },
+    "packages": {
+      "web": {
+        "runner": "vitest",
+        "total": 102,
+        "passed": 102,
+        "failed": 0,
+        "duration": "1.35s",
+        "testFiles": [
+          "src/components/MatchBadge.test.tsx (35 tests)",
+          "src/components/SlotItem.test.tsx (42 tests)",
+          "src/components/ProviderCard.test.tsx (25 tests)"
+        ]
+      },
+      "api": {
+        "runner": "jest",
+        "total": 48,
+        "passed": 48,
+        "failed": 0,
+        "duration": "2.851s",
+        "testFiles": [
+          "src/app.controller.spec.ts (PASS)",
+          "src/discovery/discovery.controller.spec.ts (PASS)",
+          "src/discovery/discovery.service.spec.ts (PASS)"
+        ]
+      }
+    },
+    "summary": {
+      "total": 150,
+      "passed": 150,
+      "failed": 0,
+      "skipped": 0,
+      "duration": "~4s"
+    },
+    "failures": [],
+    "notes": "Fixed discovery.service.spec.ts: updated mock to use $queryRaw instead of provider.findMany, added RedisService mock, removed invalid retryDelayOnFailover option from Redis config"
+  }
+]

@@ -1,31 +1,18 @@
 'use client';
 
-import { useState, useEffect, Suspense, useCallback, useMemo } from 'react';
+import { useState, useEffect, Suspense, useMemo } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import type {
   ServiceCategory,
   TimeWindow,
   Provider,
-  DiscoveryResponse,
 } from '../../types/discovery';
 import { ProviderCard } from '../../components/ProviderCard';
 import { calculateMatchLikelihood } from '../../components/MatchBadge';
-
-const API_BASE_URL =
-  process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:3001';
+import { useDiscovery } from '../../lib/hooks';
 
 // Sort mode options
 type SortMode = 'price' | 'rating' | 'distance';
-
-// Service labels for display
-const SERVICE_LABELS: Record<ServiceCategory, string> = {
-  MASSAGE: 'Massage',
-  ACUPUNCTURE: 'Acupuncture',
-  NAILS: 'Nails',
-  HAIR: 'Hair',
-  FACIALS_AND_SKIN: 'Facials & Skin',
-  LASHES_AND_BROWS: 'Lashes & Brows',
-};
 
 // Time window labels for display
 const TIME_WINDOW_LABELS: Record<TimeWindow, string> = {
@@ -69,7 +56,6 @@ function filterProvidersWithSlots(providers: Provider[]): Provider[] {
 function sortProviders(
   providers: Provider[],
   sortMode: SortMode,
-  userBid: number,
   bestOfferProviderId: string | null
 ): Provider[] {
   return [...providers].sort((a, b) => {
@@ -124,20 +110,6 @@ function findClosestProvider(providers: Provider[]): string | null {
   return best.providerId;
 }
 
-// Get best match score for a provider (0-3, higher is better)
-function getBestMatchScore(provider: Provider, userBid: number): number {
-  let bestScore = 0;
-  for (const slot of provider.slots) {
-    const likelihood = calculateMatchLikelihood(userBid, slot.maxDiscountedPrice);
-    const score =
-      likelihood === 'Very High' ? 3 :
-      likelihood === 'High' ? 2 :
-      likelihood === 'Low' ? 1 : 0;
-    if (score > bestScore) bestScore = score;
-  }
-  return bestScore;
-}
-
 function LiveOffersContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -152,9 +124,6 @@ function LiveOffersContent() {
   const serviceType = searchParams.get('serviceType');
 
   // State
-  const [providers, setProviders] = useState<Provider[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   const [sortMode, setSortMode] = useState<SortMode>('price');
 
   // Redirect if missing required params
@@ -164,51 +133,32 @@ function LiveOffersContent() {
     }
   }, [service, city, timeWindow, serviceType, router]);
 
-  // Fetch providers from API
-  const fetchProviders = useCallback(async () => {
-    if (!service || !city || !timeWindow || !serviceType) return;
-
-    setLoading(true);
-    setError(null);
-
-    try {
-      const response = await fetch(`${API_BASE_URL}/api/discovery`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
+  // Use React Query hook for data fetching with automatic deduplication
+  const { data, isLoading, error, refetch } = useDiscovery(
+    service && city && timeWindow && serviceType
+      ? {
           serviceCategory: service,
           city,
           zipCode: zipCode || undefined,
           timeWindow,
-          serviceType, // Filter by specific service type
-        }),
-      });
+          serviceType,
+        }
+      : null
+  );
 
-      if (!response.ok) {
-        throw new Error(`API error: ${response.status}`);
-      }
-
-      const data = (await response.json()) as DiscoveryResponse;
-      setProviders(data.providers || []);
-    } catch (err) {
-      console.error('Discovery fetch error:', err);
-      setError('Failed to load offers. Please try again.');
-    } finally {
-      setLoading(false);
-    }
-  }, [service, city, zipCode, timeWindow, serviceType]);
-
-  useEffect(() => {
-    fetchProviders();
-  }, [fetchProviders]);
+  const providers = data?.providers || [];
 
   // Filter to only providers with available slots (API filters by time window)
-  const providersWithSlots = filterProvidersWithSlots(providers);
+  const providersWithSlots = useMemo(
+    () => filterProvidersWithSlots(providers),
+    [providers]
+  );
 
   // Calculate best offer from providers with slots
-  const bestOffer = findBestOffer(providersWithSlots, userBid);
+  const bestOffer = useMemo(
+    () => findBestOffer(providersWithSlots, userBid),
+    [providersWithSlots, userBid]
+  );
 
   // Calculate badge assignments (each badge goes to exactly one provider)
   const highestRatedProviderId = useMemo(
@@ -222,8 +172,8 @@ function LiveOffersContent() {
 
   // Sort providers based on selected mode
   const sortedProviders = useMemo(
-    () => sortProviders(providersWithSlots, sortMode, userBid, bestOffer?.providerId || null),
-    [providersWithSlots, sortMode, userBid, bestOffer?.providerId]
+    () => sortProviders(providersWithSlots, sortMode, bestOffer?.providerId || null),
+    [providersWithSlots, sortMode, bestOffer?.providerId]
   );
 
   // Handle bid action (placeholder for MVP)
@@ -325,7 +275,7 @@ function LiveOffersContent() {
         </div>
 
         {/* Loading State */}
-        {loading && (
+        {isLoading && (
           <div className="space-y-4">
             {[1, 2, 3].map((i) => (
               <div key={i} className="bg-white rounded-xl border border-slate-200 p-4 animate-pulse">
@@ -341,17 +291,19 @@ function LiveOffersContent() {
         )}
 
         {/* Error State */}
-        {error && !loading && (
+        {error && !isLoading && (
           <div className="bg-white rounded-xl border border-red-200 p-8 text-center">
             <div className="text-red-500 mb-4">
               <svg className="w-12 h-12 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
               </svg>
             </div>
-            <p className="text-slate-700 font-medium mb-2">{error}</p>
+            <p className="text-slate-700 font-medium mb-2">
+              {error instanceof Error ? error.message : 'Failed to load offers. Please try again.'}
+            </p>
             <button
               type="button"
-              onClick={fetchProviders}
+              onClick={() => refetch()}
               className="mt-4 px-4 py-2 bg-slate-900 text-white rounded-lg text-sm font-medium hover:bg-slate-800"
             >
               Try Again
@@ -360,7 +312,7 @@ function LiveOffersContent() {
         )}
 
         {/* Empty State */}
-        {!loading && !error && sortedProviders.length === 0 && (
+        {!isLoading && !error && sortedProviders.length === 0 && (
           <div className="bg-white rounded-xl border border-slate-200 p-8 text-center">
             <div className="text-slate-400 mb-4">
               <svg className="w-12 h-12 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -382,7 +334,7 @@ function LiveOffersContent() {
         )}
 
         {/* Provider Cards */}
-        {!loading && !error && sortedProviders.length > 0 && (
+        {!isLoading && !error && sortedProviders.length > 0 && (
           <div className="space-y-4">
             {/* Results count */}
             <p className="text-sm text-slate-500">

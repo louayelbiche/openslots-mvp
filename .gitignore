@@ -38,3 +38,6 @@ apps/api/dist/
 
 # Claude agent lock files (for parallel execution)
 claude/.locks/
+
+# Playwright MCP screenshots (managed by ua-tester)
+.playwright-mcp/

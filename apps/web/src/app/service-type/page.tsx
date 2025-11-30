@@ -1,14 +1,9 @@
 'use client';
 
-import { useState, useEffect, Suspense } from 'react';
+import { useState, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import type { ServiceCategory } from '../../types/discovery';
-
-interface ServiceType {
-  name: string;
-  durationMin: number;
-  slotCount: number;
-}
+import type { ServiceCategory, TimeWindow } from '../../types/discovery';
+import { useServiceTypes } from '../../lib/hooks';
 
 // Helper to format duration
 function formatDuration(minutes: number): string {
@@ -24,48 +19,23 @@ function ServiceTypeContent() {
 
   const service = searchParams.get('service') as ServiceCategory;
   const city = searchParams.get('city');
-  const timeWindow = searchParams.get('timeWindow');
+  const timeWindow = searchParams.get('timeWindow') as TimeWindow | null;
   const zipCode = searchParams.get('zipCode');
 
-  const [serviceTypes, setServiceTypes] = useState<ServiceType[]>([]);
   const [selectedType, setSelectedType] = useState<string | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    if (!service || !city) {
-      setError('Missing service or city');
-      setLoading(false);
-      return;
-    }
-
-    const fetchServiceTypes = async () => {
-      try {
-        const response = await fetch('http://localhost:3001/api/service-types', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            serviceCategory: service,
-            city: city,
-            timeWindow: timeWindow || undefined,
-          }),
-        });
-
-        if (!response.ok) {
-          throw new Error('Failed to fetch service types');
+  // Use React Query hook for data fetching with automatic deduplication
+  const { data, isLoading, error } = useServiceTypes(
+    service && city
+      ? {
+          serviceCategory: service,
+          city,
+          timeWindow: timeWindow || undefined,
         }
+      : null
+  );
 
-        const data = await response.json();
-        setServiceTypes(data.serviceTypes || []);
-      } catch (err) {
-        setError(err instanceof Error ? err.message : 'Failed to load service types');
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchServiceTypes();
-  }, [service, city]);
+  const serviceTypes = data?.serviceTypes || [];
 
   const handleContinue = () => {
     if (!selectedType) return;
@@ -92,7 +62,9 @@ function ServiceTypeContent() {
     return (
       <main className="min-h-screen bg-slate-50 flex items-center justify-center">
         <div className="text-center">
-          <p className="text-red-600 mb-4">{error}</p>
+          <p className="text-red-600 mb-4">
+            {error instanceof Error ? error.message : 'Failed to load service types'}
+          </p>
           <button
             onClick={handleBack}
             className="text-slate-600 underline"
@@ -139,7 +111,7 @@ function ServiceTypeContent() {
         </div>
 
         {/* Service Types List */}
-        {loading ? (
+        {isLoading ? (
           <div className="space-y-3">
             {[1, 2, 3, 4].map((i) => (
               <div
@@ -204,7 +176,7 @@ function ServiceTypeContent() {
         )}
 
         {/* Continue Button */}
-        {!loading && serviceTypes.length > 0 && (
+        {!isLoading && serviceTypes.length > 0 && (
           <>
             <button
               type="button"

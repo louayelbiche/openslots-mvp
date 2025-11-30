@@ -103,6 +103,9 @@ model Provider {
   // Rating and reviews
   rating       Decimal?  @db.Decimal(3, 2)  // e.g., 4.85
 
+  // External booking (before full platform onboarding)
+  bookingUrl   String?   // Provider's own booking website URL
+
   owner       User      @relation(fields: [ownerId], references: [id])
   ownerId     String
   createdAt   DateTime  @default(now())

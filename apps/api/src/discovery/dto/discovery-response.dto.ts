@@ -18,6 +18,7 @@ export class ProviderDto {
   city: string;
   slots: SlotDto[];
   lowestPrice: number;
+  bookingUrl?: string; // Provider's external booking website
 }
 
 export class DiscoveryResponseDto {

@@ -52,6 +52,7 @@ interface ProviderSeedData {
   latitude: number;
   longitude: number;
   rating: number;
+  bookingUrl?: string; // Provider's external booking website
   category: ServiceCategory;
   services: Array<{
     name: string;
@@ -76,6 +77,7 @@ const providerData: ProviderSeedData[] = [
     latitude: 40.7484,
     longitude: -73.9857,
     rating: 4.85,
+    bookingUrl: "https://zenflowmassage.example.com/book",
     category: ServiceCategory.MASSAGE,
     services: [
       { name: "Deep Tissue Massage", description: "Intense pressure for muscle relief", durationMin: 60, basePrice: 120_00 },
@@ -188,6 +190,7 @@ const providerData: ProviderSeedData[] = [
     latitude: 34.0675,
     longitude: -118.4006,
     rating: 4.95,
+    bookingUrl: "https://beverlyhillsbodyworks.example.com/schedule",
     category: ServiceCategory.MASSAGE,
     services: [
       { name: "Signature Luxury Massage", description: "Premium full-body experience", durationMin: 90, basePrice: 250_00 },
@@ -238,6 +241,7 @@ const providerData: ProviderSeedData[] = [
     latitude: 40.7223,
     longitude: -73.9987,
     rating: 4.72,
+    bookingUrl: "https://glamournailsnyc.example.com/appointments",
     category: ServiceCategory.NAILS,
     services: [
       { name: "Gel Manicure", description: "Long-lasting gel polish manicure", durationMin: 45, basePrice: 55_00 },
@@ -1051,6 +1055,7 @@ const providerData: ProviderSeedData[] = [
     latitude: -8.5069,
     longitude: 115.2625,
     rating: 4.92,
+    bookingUrl: "https://ubudhealingsanctuary.example.com/book",
     category: ServiceCategory.MASSAGE,
     services: [
       { name: "Balinese Massage", description: "Traditional healing massage", durationMin: 60, basePrice: 45_00 },
@@ -1100,6 +1105,7 @@ const providerData: ProviderSeedData[] = [
     latitude: -8.6912,
     longitude: 115.1578,
     rating: 4.82,
+    bookingUrl: "https://balinaillounge.example.com/reserve",
     category: ServiceCategory.NAILS,
     services: [
       { name: "Gel Manicure", description: "Long-lasting gel polish", durationMin: 45, basePrice: 25_00 },
@@ -1297,6 +1303,7 @@ async function main() {
         latitude: new Prisma.Decimal(pData.latitude),
         longitude: new Prisma.Decimal(pData.longitude),
         rating: new Prisma.Decimal(pData.rating),
+        bookingUrl: pData.bookingUrl,
         ownerId: providerOwner.id,
       },
     });

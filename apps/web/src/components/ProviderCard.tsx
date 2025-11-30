@@ -142,6 +142,8 @@ export function ProviderCard({
           bestOfferSlotId={effectiveBestOfferSlotId}
           selectedSlotId={selectedSlotId}
           isBestOfferProvider={isBestOfferProvider}
+          bookingUrl={provider.bookingUrl}
+          providerName={provider.name}
           onSelect={setSelectedSlotId}
           onBid={handleBid}
         />

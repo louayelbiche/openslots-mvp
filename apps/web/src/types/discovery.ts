@@ -43,6 +43,7 @@ export interface Provider {
   city: string;
   slots: Slot[];
   lowestPrice: number;
+  bookingUrl?: string; // Provider's external booking website
 }
 
 // Discovery API response
