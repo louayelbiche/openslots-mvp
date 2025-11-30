@@ -63,7 +63,6 @@ function BudgetSelectorContent() {
   const [inputError, setInputError] = useState('');
   const [recommendedPrice, setRecommendedPrice] = useState<number | null>(null);
   const [loadingRecommended, setLoadingRecommended] = useState(true);
-  const [hasAdjustedPrice, setHasAdjustedPrice] = useState(false);
 
   // Redirect if missing required params
   useEffect(() => {
@@ -135,14 +134,12 @@ function BudgetSelectorContent() {
     setBudget(value);
     setInputValue(value.toString());
     setInputError('');
-    setHasAdjustedPrice(true);
   };
 
   // Handle input change
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const raw = e.target.value.replace(/[^0-9]/g, '');
     setInputValue(raw);
-    setHasAdjustedPrice(true);
 
     const value = parseInt(raw, 10);
     if (!isNaN(value)) {
@@ -240,14 +237,14 @@ function BudgetSelectorContent() {
 
         {/* Price Display Card */}
         <div className="bg-white rounded-xl border border-slate-200 p-6 mb-4">
-          {loadingRecommended && !hasAdjustedPrice ? (
+          {loadingRecommended ? (
             // Loading state while fetching recommended price
             <div className="animate-pulse">
               <div className="h-4 bg-slate-200 rounded w-32 mb-3"></div>
               <div className="h-12 bg-slate-200 rounded w-24 mb-3"></div>
               <div className="h-4 bg-slate-200 rounded w-40"></div>
             </div>
-          ) : !hasAdjustedPrice && recommendedPrice !== null ? (
+          ) : budget === recommendedPrice && recommendedPrice !== null ? (
             <>
               <div className="flex items-center gap-2 mb-2">
                 <svg
@@ -290,13 +287,6 @@ function BudgetSelectorContent() {
             </>
           )}
         </div>
-
-        {/* Secondary info when recommended price is shown */}
-        {!hasAdjustedPrice && !loadingRecommended && recommendedPrice !== null && (
-          <div className="bg-emerald-50 rounded-xl border border-emerald-200 p-4 mb-4 text-center">
-            <p className="text-sm text-emerald-700">Price based on demand &amp; local averages</p>
-          </div>
-        )}
 
         {/* Budget Slider */}
         <div className="mb-6">
