@@ -44,9 +44,7 @@ export class DiscoveryService {
     if (!request.city) {
       throw new BadRequestException("city is required");
     }
-    if (!request.timeWindow) {
-      throw new BadRequestException("timeWindow is required");
-    }
+    // timeWindow is optional - if not provided, returns all slots
   }
 
   private async fetchProviders(city: string, serviceCategory: string) {
@@ -77,15 +75,17 @@ export class DiscoveryService {
 
   private filterAndTransformProviders(
     providers: any[],
-    timeWindow: TimeWindow
+    timeWindow?: TimeWindow
   ): ProviderDto[] {
     const result: ProviderDto[] = [];
 
     for (const provider of providers) {
-      // Filter slots by time window (considering provider's city timezone)
-      const filteredSlots = provider.slots.filter((slot: any) =>
-        this.isSlotInTimeWindow(slot.startTime, timeWindow, provider.city)
-      );
+      // Filter slots by time window (if provided), considering provider's city timezone
+      const filteredSlots = timeWindow
+        ? provider.slots.filter((slot: any) =>
+            this.isSlotInTimeWindow(slot.startTime, timeWindow, provider.city)
+          )
+        : provider.slots;
 
       // Skip providers with no valid slots
       if (filteredSlots.length === 0) {

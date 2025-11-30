@@ -63,6 +63,7 @@ function BudgetSelectorContent() {
   const [inputError, setInputError] = useState('');
   const [recommendedPrice, setRecommendedPrice] = useState<number | null>(null);
   const [loadingRecommended, setLoadingRecommended] = useState(true);
+  const [hasAdjustedPrice, setHasAdjustedPrice] = useState(false);
 
   // Redirect if missing required params
   useEffect(() => {
@@ -71,12 +72,14 @@ function BudgetSelectorContent() {
     }
   }, [service, city, timeWindow, router]);
 
-  // Fetch recommended price from discovery API
+  // Fetch recommended price from discovery API (all slots for service+city, no time filter)
   const fetchRecommendedPrice = useCallback(async () => {
-    if (!service || !city || !timeWindow) return;
+    if (!service || !city) return;
 
     setLoadingRecommended(true);
     try {
+      // Fetch ALL slots for this service+city (no timeWindow filter)
+      // to calculate average price across all time slots
       const response = await fetch(`${API_BASE_URL}/api/discovery`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -84,7 +87,7 @@ function BudgetSelectorContent() {
           serviceCategory: service,
           city,
           zipCode: zipCode || undefined,
-          timeWindow,
+          // No timeWindow - returns all slots for accurate recommended price
         }),
       });
 
@@ -116,7 +119,7 @@ function BudgetSelectorContent() {
     } finally {
       setLoadingRecommended(false);
     }
-  }, [service, city, zipCode, timeWindow]);
+  }, [service, city, zipCode]);
 
   useEffect(() => {
     fetchRecommendedPrice();
@@ -132,12 +135,14 @@ function BudgetSelectorContent() {
     setBudget(value);
     setInputValue(value.toString());
     setInputError('');
+    setHasAdjustedPrice(true);
   };
 
   // Handle input change
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const raw = e.target.value.replace(/[^0-9]/g, '');
     setInputValue(raw);
+    setHasAdjustedPrice(true);
 
     const value = parseInt(raw, 10);
     if (!isNaN(value)) {
@@ -233,62 +238,58 @@ function BudgetSelectorContent() {
           </div>
         </div>
 
-        {/* Recommended Price Card */}
-        {!loadingRecommended && recommendedPrice !== null && (
-          <div className="bg-emerald-50 rounded-xl border border-emerald-200 p-4 mb-4">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <svg
-                  className="w-5 h-5 text-emerald-600"
-                  fill="currentColor"
-                  viewBox="0 0 20 20"
-                >
-                  <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-                </svg>
-                <span className="text-sm font-medium text-emerald-800">Recommended Price</span>
-              </div>
-              <button
-                type="button"
-                onClick={() => {
-                  setBudget(recommendedPrice);
-                  setInputValue(recommendedPrice.toString());
-                }}
-                className="text-2xl font-bold text-emerald-700 hover:underline"
-              >
-                ${recommendedPrice}
-              </button>
-            </div>
-          </div>
-        )}
-
-        {loadingRecommended && (
-          <div className="bg-slate-100 rounded-xl border border-slate-200 p-4 mb-4 animate-pulse">
-            <div className="flex items-center justify-between">
-              <div className="h-5 bg-slate-200 rounded w-32"></div>
-              <div className="h-8 bg-slate-200 rounded w-16"></div>
-            </div>
-          </div>
-        )}
-
         {/* Price Display Card */}
-        <div className="bg-white rounded-xl border border-slate-200 p-6 mb-6 text-center">
-          <p className="text-sm text-slate-500 mb-2">Your Offer</p>
-          <div className="text-5xl font-bold text-slate-900 mb-4">
-            ${budget}
-          </div>
-
-          {/* Match Likelihood Badge */}
-          <div
-            className={`
-              inline-flex items-center px-4 py-2 rounded-full text-sm font-medium
-              ${matchColors.bg} ${matchColors.text}
-            `}
-            role="status"
-            aria-live="polite"
-          >
-            {matchLikelihood} Match
-          </div>
+        <div className="bg-white rounded-xl border border-slate-200 p-6 mb-4">
+          {!hasAdjustedPrice && !loadingRecommended && recommendedPrice !== null ? (
+            <>
+              <div className="flex items-center gap-2 mb-2">
+                <svg
+                  className="w-5 h-5 text-slate-600"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+                </svg>
+                <span className="text-sm font-medium text-slate-700">Recommended Price</span>
+              </div>
+              <div className="text-5xl font-bold text-slate-900 mb-2">
+                ${recommendedPrice}
+              </div>
+              <div className="flex items-center gap-1 text-sm text-slate-500">
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 17h8m0 0V9m0 8l-8-8-4 4-6-6" />
+                </svg>
+                <span>High match likelihood</span>
+              </div>
+            </>
+          ) : (
+            <>
+              <p className="text-sm text-slate-500 mb-2">Your Offer</p>
+              <div className="text-5xl font-bold text-slate-900 mb-4">
+                ${budget}
+              </div>
+              {/* Match Likelihood Badge */}
+              <div
+                className={`
+                  inline-flex items-center px-4 py-2 rounded-full text-sm font-medium
+                  ${matchColors.bg} ${matchColors.text}
+                `}
+                role="status"
+                aria-live="polite"
+              >
+                {matchLikelihood} Match
+              </div>
+            </>
+          )}
         </div>
+
+        {/* Secondary info when recommended price is shown */}
+        {!hasAdjustedPrice && !loadingRecommended && recommendedPrice !== null && (
+          <div className="bg-emerald-50 rounded-xl border border-emerald-200 p-4 mb-4 text-center">
+            <p className="text-sm text-emerald-700">Price based on demand &amp; local averages</p>
+          </div>
+        )}
 
         {/* Budget Slider */}
         <div className="mb-6">
