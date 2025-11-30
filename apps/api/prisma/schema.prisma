@@ -111,6 +111,8 @@ model Provider {
   services      Service[]
   slots         Slot[]
   negotiations  Negotiation[]
+
+  @@index([city])
 }
 
 model Service {
@@ -124,6 +126,9 @@ model Service {
   provider    Provider        @relation(fields: [providerId], references: [id])
 
   slots Slot[]
+
+  @@index([category])
+  @@index([providerId])
 }
 
 model Slot {
@@ -145,6 +150,10 @@ model Slot {
 
   booking       Booking?
   negotiations  Negotiation[]
+
+  @@index([status])
+  @@index([serviceId])
+  @@index([providerId])
 }
 
 model Booking {
