@@ -21,6 +21,15 @@ function formatTime(isoString: string): string {
   });
 }
 
+function formatDate(isoString: string): string {
+  const date = new Date(isoString);
+  return date.toLocaleDateString('en-US', {
+    weekday: 'short',
+    month: 'short',
+    day: 'numeric',
+  });
+}
+
 function formatPrice(cents: number): string {
   return `$${(cents / 100).toFixed(cents % 100 === 0 ? 0 : 2)}`;
 }
@@ -60,13 +69,14 @@ export function SlotDropdown({
         >
           {slots.map((slot) => {
             const isBest = isBestOfferProvider && slot.slotId === bestOfferSlotId;
+            const slotDate = formatDate(slot.startTime);
             const startTime = formatTime(slot.startTime);
             const endTime = formatTime(slot.endTime);
             const price = formatPrice(slot.maxDiscountedPrice);
 
             return (
               <option key={slot.slotId} value={slot.slotId}>
-                {startTime} - {endTime} • {price}{isBest ? ' • Best Offer' : ''}
+                {slotDate} • {startTime} - {endTime} • {price}{isBest ? ' • Best Offer' : ''}
               </option>
             );
           })}

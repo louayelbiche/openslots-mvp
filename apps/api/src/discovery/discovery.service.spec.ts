@@ -192,21 +192,29 @@ describe("DiscoveryService", () => {
       );
     });
 
-    it("should throw BadRequestException when timeWindow is missing", async () => {
-      // Arrange
+    it("should return all slots when timeWindow is not provided", async () => {
+      // Arrange - timeWindow is now optional, returns all slots
       const request = {
         serviceCategory: ServiceCategory.MASSAGE,
         city: TEST_CITIES.NEW_YORK,
-        timeWindow: null as any,
+        // No timeWindow - should return all slots
       };
 
-      // Act & Assert
-      await expect(service.discover(request)).rejects.toThrow(
-        BadRequestException
-      );
-      await expect(service.discover(request)).rejects.toThrow(
-        "timeWindow is required"
-      );
+      const mockProvider = createTestProviderWithSlots({
+        city: TEST_CITIES.NEW_YORK,
+        slots: [
+          { startTime: new Date("2025-11-28T14:00:00Z") }, // 9am EST
+          { startTime: new Date("2025-11-28T17:00:00Z") }, // 12pm EST
+          { startTime: new Date("2025-11-28T21:00:00Z") }, // 4pm EST
+        ],
+      });
+      prisma.provider.findMany.mockResolvedValue([mockProvider]);
+
+      // Act
+      const result = await service.discover(request);
+
+      // Assert - all 3 slots returned (no time filtering)
+      expect(result.providers[0].slots).toHaveLength(3);
     });
   });
 

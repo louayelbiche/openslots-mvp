@@ -47,6 +47,7 @@ function ServiceTypeContent() {
           body: JSON.stringify({
             serviceCategory: service,
             city: city,
+            timeWindow: timeWindow || undefined,
           }),
         });
 

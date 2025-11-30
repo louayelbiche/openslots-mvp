@@ -47,23 +47,31 @@ export class DiscoveryService {
             status: SlotStatus.OPEN,
           },
         },
+        provider: true,
       },
     });
 
-    // Group by service name and count slots
+    // Group by service name and count slots (filtered by timeWindow if provided)
     const serviceTypeMap = new Map<
       string,
       { durationMin: number; slotCount: number }
     >();
 
     for (const service of services) {
+      // Filter slots by time window if provided
+      const filteredSlots = request.timeWindow
+        ? service.slots.filter((slot) =>
+            this.isSlotInTimeWindow(slot.startTime, request.timeWindow!, service.provider.city)
+          )
+        : service.slots;
+
       const existing = serviceTypeMap.get(service.name);
       if (existing) {
-        existing.slotCount += service.slots.length;
+        existing.slotCount += filteredSlots.length;
       } else {
         serviceTypeMap.set(service.name, {
           durationMin: service.durationMin,
-          slotCount: service.slots.length,
+          slotCount: filteredSlots.length,
         });
       }
     }
