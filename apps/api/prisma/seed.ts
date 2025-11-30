@@ -1140,6 +1140,72 @@ const providerData: ProviderSeedData[] = [
       { name: "Hair Treatment", description: "Deep conditioning", durationMin: 60, basePrice: 40_00 },
     ],
   },
+  // ACUPUNCTURE
+  {
+    name: "Ubud Traditional Healing",
+    description: "Ancient acupuncture techniques in Ubud",
+    address: "Jl. Hanoman No. 44",
+    city: "Bali",
+    state: "Indonesia",
+    zipCode: "80571",
+    latitude: -8.5089,
+    longitude: 115.2645,
+    rating: 4.90,
+    category: ServiceCategory.ACUPUNCTURE,
+    services: [
+      { name: "Traditional Acupuncture", description: "Classic needle therapy", durationMin: 60, basePrice: 50_00 },
+      { name: "Cupping Therapy", description: "Traditional cupping treatment", durationMin: 45, basePrice: 40_00 },
+    ],
+  },
+  {
+    name: "Sanur Wellness Acupuncture",
+    description: "Holistic healing by the beach",
+    address: "Jl. Danau Tamblingan No. 78",
+    city: "Bali",
+    state: "Indonesia",
+    zipCode: "80228",
+    latitude: -8.6783,
+    longitude: 115.2631,
+    rating: 4.82,
+    category: ServiceCategory.ACUPUNCTURE,
+    services: [
+      { name: "Pain Relief Acupuncture", description: "Targeted pain treatment", durationMin: 60, basePrice: 55_00 },
+      { name: "Stress Relief Session", description: "Relaxation focused", durationMin: 75, basePrice: 60_00 },
+    ],
+  },
+  // LASHES_AND_BROWS
+  {
+    name: "Bali Lash Studio",
+    description: "Premium lash extensions in Seminyak",
+    address: "Jl. Petitenget No. 99",
+    city: "Bali",
+    state: "Indonesia",
+    zipCode: "80361",
+    latitude: -8.6756,
+    longitude: 115.1589,
+    rating: 4.85,
+    category: ServiceCategory.LASHES_AND_BROWS,
+    services: [
+      { name: "Classic Lash Extensions", description: "Natural lash enhancement", durationMin: 90, basePrice: 45_00 },
+      { name: "Brow Shaping", description: "Perfect brow design", durationMin: 30, basePrice: 20_00 },
+    ],
+  },
+  {
+    name: "Canggu Brow Bar",
+    description: "Trendy brow studio for surfers",
+    address: "Jl. Batu Mejan No. 22",
+    city: "Bali",
+    state: "Indonesia",
+    zipCode: "80351",
+    latitude: -8.6512,
+    longitude: 115.1356,
+    rating: 4.72,
+    category: ServiceCategory.LASHES_AND_BROWS,
+    services: [
+      { name: "Brow Lamination", description: "Fluffy brow treatment", durationMin: 45, basePrice: 35_00 },
+      { name: "Lash Lift & Tint", description: "Natural lash curl", durationMin: 60, basePrice: 40_00 },
+    ],
+  },
 ];
 
 // Slot configuration: varied discounts and time windows

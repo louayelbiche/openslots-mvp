@@ -240,7 +240,14 @@ function BudgetSelectorContent() {
 
         {/* Price Display Card */}
         <div className="bg-white rounded-xl border border-slate-200 p-6 mb-4">
-          {!hasAdjustedPrice && !loadingRecommended && recommendedPrice !== null ? (
+          {loadingRecommended && !hasAdjustedPrice ? (
+            // Loading state while fetching recommended price
+            <div className="animate-pulse">
+              <div className="h-4 bg-slate-200 rounded w-32 mb-3"></div>
+              <div className="h-12 bg-slate-200 rounded w-24 mb-3"></div>
+              <div className="h-4 bg-slate-200 rounded w-40"></div>
+            </div>
+          ) : !hasAdjustedPrice && recommendedPrice !== null ? (
             <>
               <div className="flex items-center gap-2 mb-2">
                 <svg
