@@ -41,3 +41,12 @@ claude/.locks/
 
 # Playwright MCP screenshots (managed by ua-tester)
 .playwright-mcp/
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+
+# Scraper output (generated data)
+tools/scraper/output/
+tools/scraper/scraped_services_data.json
