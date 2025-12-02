@@ -113,6 +113,155 @@ REJECT_PATTERNS = [
     r'your\s+journey',
     r'escape\s+to',
     r'indulge\s+in',
+
+    # Questions/article titles (only when clearly educational, not service names)
+    r'^what\s+is\s+a\s+\w+\s+massage\?',  # "What is a Swedish Massage?"
+    r'^how\s+to\s+get\s+',
+    r'^why\s+you\s+should\s+',
+    r'benefits\s+you\s+should\s+know',
+
+    # Numbered list article titles (must be long enough to be an article)
+    r'^\d+\s+ways\s+.{20,}',  # "7 Ways a Facial Can Rescue..."
+    r'^\d+\s+reasons\s+.{15,}',
+    r'^\d+\s+tips\s+for\s+',
+
+    # Testimonial fragments (specific patterns from real bad data)
+    r'made\s+me\s+feel\s+welcome',
+    r'one\s+of\s+the\s+best\s+.{10,}',  # Long testimonials only
+    r'best\s+.{5,}\s+i\'?ve?\s+(ever\s+)?had',
+    r'will\s+definitely\s+be\s+back',
+    r'can\'?t\s+wait\s+to\s+come\s+back',
+
+    # Location-based marketing (specific patterns)
+    r'best\s+(massage|spa|experience)\s+in\s+(new\s+york|nyc|manhattan)',
+    r'(massage|spa)\s+in\s+.{5,},?\s*(ny|nyc)\s*\d*!*$',  # "Massage in New York,ny 10011!"
+
+    # Marketing with trailing "with" (incomplete sentence)
+    r'experience\s+in\s+new\s+york\s+with\s*$',
+    r'enhance\s+your\s+.{10,}\s+with\s*$',
+
+    # CTA/booking patterns (not service names)
+    r'^book\s+(your|a|now)',  # "Book Your Personalized...", "Book a..."
+    r'book\s+now\s*$',
+    r'schedule\s+(your|a)\s+',
+
+    # SEO keywords
+    r'\bnear\s+me\b',  # "Massage Near Me"
+
+    # Article titles with "Ways", "Reasons" (more specific)
+    r'^\d+\s+ways\s+',  # "5 Ways Massage Therapy..."
+    r'^why\s+you\s+(need|should)',  # "Why You Need Massage"
+
+    # Business name patterns (with separators)
+    r'\s+\|\s+.{5,}$',  # "Service | Business Name"
+    r'^.{5,}\s+\|\s+',  # "Business Name | Service"
+
+    # Marketing phrases
+    r'\bdelivers\s+.{10,}\s+therapy\b',  # "...Delivers Deep, Targeted Therapy..."
+    r'\bcan\s+release\s+',  # "Massage Can Release Yourself"
+    r'\bgoes\s+beyond\s+',  # "Goes Beyond Relaxation"
+
+    # URLs
+    r'^https?://',  # Full URLs
+    r'\.com/',  # Partial URLs
+
+    # Gift cards (not services)
+    r'\bgift\s*card\b',  # "Couples Massage Gift Card"
+
+    # Taglines/descriptions (not specific services)
+    r'^health\s*&\s*relaxation$',  # "Health & Relaxation"
+    r'beyond\s+relaxation:',  # "Beyond Relaxation: the Deeper Benefits"
+
+    # Business names with dashes or in header format
+    r'^[A-Z][\w\s]+-\s+[A-Z][\w\s,]+$',  # "Business Name - Description"
+
+    # Tips/guides (not services)
+    r'\btips\b(?!\s+massage)',  # "Prenatal Tips" but not "Tips Massage"
+
+    # Copyright notices
+    r'©\d{4}',  # ©2025
+    r'版权所有',  # Chinese copyright
+    r'all\s+rights',  # "All Rights Reserved"
+
+    # Article titles (colon in middle typically means article/blog post)
+    r'^[A-Z][^:]+:\s+[A-Z].{15,}$',  # "Taking Care of...: Off-site Chair Massage"
+
+    # Questions (more specific - must be actual question format)
+    r'^what\s+is\s+\w+\?$',  # "What Is Shiatsu?"
+    r'^how\s+does\s+',
+
+    # Concatenated domain names or business names (no spaces, camelCase/allcaps)
+    r'^[A-Z]?[a-z]+[A-Z][a-z]+[a-z]+$',  # "Malemassagenewyork"
+
+    # Taglines starting with "A " and containing "&"
+    r'^a\s+sanctuary\s+of',  # "A Sanctuary of Thai Healing..."
+    r'holistic\s+renewal',
+
+    # Email capture CTAs
+    r'enter\s+your\s+email',
+    r'save\s+on\s+your\s+first',
+    r'sign\s+up\s+for',
+
+    # Business descriptions starting with "Specializing"
+    r'^specializing\s+in\s+',
+
+    # Sentences that describe what a service "is" or "does"
+    r'is\s+designed\s+to\s+',  # "A Swedish Massage Is Designed to Relax..."
+    r'\bmakes\s+bodies\s+better\b',  # "Massage Makes Bodies Better"
+
+    # Taglines with "Authentic" and "Upscale"
+    r'^an?\s+authentic\s+',
+    r'\bupscale\s+(thai\s+)?(spa|experience)\b',
+
+    # Comparison article titles
+    r'\bvs\.?\s+\d+-handed',  # "2-handed Vs. 4-handed..."
+    r'which\s+one\s+delivers',
+
+    # "Feel X Atmosphere" patterns
+    r'\bfeel\s+\w+\s+atmosphere\b',
+
+    # Quoted testimonials/reviews
+    r'^"[^"]{10,}"\s*-\s*\w+',  # '"Great massage..." - Name'
+    r'^"[^"]+will\s+be\s+back',
+
+    # "Reserve" CTAs
+    r'^reserve\s+(your|a)\s+',
+
+    # "About X" pages
+    r'^about\s+\w+\s+',
+
+    # Description sentences with "can help to"
+    r'\bcan\s+help\s+to\s+',
+
+    # Website/copyright footers
+    r'website\s+made\s+by',
+    r'^©\s*\d{4}\s+by\s+',
+    r'–\s+website$',
+
+    # Marketing/promotional patterns
+    r'\bends\s+\d{1,2}/\d{1,2}\b',  # "Ends 10/31"
+    r'\bbogo\b',  # "BOGO"
+    r'buy\s+.+get\s+.+free',
+    r'\baward-winning\b',
+    r'^looking\s+for\s+',
+    r'\bnearby\s+me\b',
+
+    # "Find your X" / "Book X" CTAs
+    r'^find\s+your\s+',
+    r'^book\s+massage$',
+
+    # Navigation/page elements
+    r'\bmassage\s+types$',
+
+    # Person names (standalone) - REMOVED: too aggressive
+    # r'^[A-Z][a-z]+\s+[A-Z][a-z]+$',  # "Claire Nagel" (just first+last name)
+
+    # "Brought from X to Y" marketing
+    r'\bbrought\s+from\s+',
+
+    # Long testimonial sentences
+    r'^a\s+wonderful\s+spa\s+',
+    r'absolutely\s+rejuvenating',
 ]
 
 # Lowercase words for title case (unless first word)
@@ -363,7 +512,14 @@ def filter_services_with_llm_sync(
     batch_size: int = 50
 ) -> Dict[str, bool]:
     """Synchronous wrapper for LLM filtering."""
-    return asyncio.run(filter_services_with_llm(service_names, category, batch_size))
+    try:
+        loop = asyncio.get_running_loop()
+        # We're in an async context, can't use asyncio.run()
+        # Return empty dict to skip LLM filtering (will be handled by async version)
+        return {}
+    except RuntimeError:
+        # No event loop running, safe to use asyncio.run()
+        return asyncio.run(filter_services_with_llm(service_names, category, batch_size))
 
 
 # ============================================================================
@@ -435,13 +591,56 @@ def clean_provider_services(
     return provider
 
 
+async def clean_all_providers_async(
+    data: Dict[str, Any],
+    category: str = "MASSAGE",
+    use_llm: bool = True
+) -> Dict[str, Any]:
+    """
+    Async version: Clean services for all providers in a dataset.
+
+    Args:
+        data: Dict with 'providers' list
+        category: Service category
+        use_llm: Whether to use LLM for ambiguous filtering
+
+    Returns:
+        Cleaned data
+    """
+    providers = data.get('providers', [])
+
+    # Collect all unique service names for LLM batch processing
+    llm_results = None
+    if use_llm and HAS_ANTHROPIC and os.environ.get('ANTHROPIC_API_KEY'):
+        all_names = set()
+        for provider in providers:
+            for service in provider.get('services', []):
+                name = service.get('name', '')
+                if is_valid_service(name):
+                    cleaned_name = clean_service_name(name)
+                    if cleaned_name and len(cleaned_name) >= 3:
+                        all_names.add(cleaned_name)
+
+        if all_names:
+            print(f"Running LLM filtering on {len(all_names)} unique service names...")
+            llm_results = await filter_services_with_llm(list(all_names), category)
+            valid_count = sum(1 for v in llm_results.values() if v)
+            print(f"LLM kept {valid_count}/{len(all_names)} services")
+
+    for provider in providers:
+        clean_provider_services(provider, category, llm_results)
+
+    return data
+
+
 def clean_all_providers(
     data: Dict[str, Any],
     category: str = "MASSAGE",
     use_llm: bool = True
 ) -> Dict[str, Any]:
     """
-    Clean services for all providers in a dataset.
+    Sync version: Clean services for all providers in a dataset.
+    For async contexts, use clean_all_providers_async instead.
 
     Args:
         data: Dict with 'providers' list
@@ -468,8 +667,11 @@ def clean_all_providers(
         if all_names:
             print(f"Running LLM filtering on {len(all_names)} unique service names...")
             llm_results = filter_services_with_llm_sync(list(all_names), category)
-            valid_count = sum(1 for v in llm_results.values() if v)
-            print(f"LLM kept {valid_count}/{len(all_names)} services")
+            if llm_results:  # Empty dict means we're in async context
+                valid_count = sum(1 for v in llm_results.values() if v)
+                print(f"LLM kept {valid_count}/{len(all_names)} services")
+            else:
+                print("Skipping LLM filtering (in async context, use clean_all_providers_async)")
 
     for provider in providers:
         clean_provider_services(provider, category, llm_results)
