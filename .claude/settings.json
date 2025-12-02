@@ -1,0 +1,15 @@
+{
+  "permissions": {
+    "allow": [
+      "WebFetch(domain:*)",
+      "Bash(python:*)",
+      "Bash(python3:*)",
+      "Bash(pip install:*)",
+      "Bash(pip3 install:*)",
+      "Bash(source:*)",
+      "Bash(cd /Users/balencia/Documents/Code/openslots-mvp/tools:*)",
+      "Bash(python -m scraper:*)",
+      "Bash(python3 -m scraper:*)"
+    ]
+  }
+}
