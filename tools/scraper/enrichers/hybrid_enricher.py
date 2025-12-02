@@ -14,6 +14,7 @@ from dataclasses import dataclass
 
 from .booking_scraper import BookingScraper, BookingSystem
 from .website_enricher import WebsiteEnricher, ExtractedService, EnrichmentResult
+from ..transformers.service_cleaner import clean_all_providers_async
 
 
 @dataclass
@@ -208,6 +209,18 @@ class HybridEnricher:
             },
             "providers": enriched_providers,
         }
+
+        # Clean services using service_cleaner (Section 5 rules)
+        print("\nCleaning service names...")
+        category = data.get("metadata", {}).get("category", "MASSAGE").upper()
+        output_data = await clean_all_providers_async(output_data, category=category, use_llm=True)
+
+        # Update stats with cleaning results
+        total_services = sum(len(p.get('services', [])) for p in output_data.get('providers', []))
+        output_data["metadata"]["cleaning_stats"] = {
+            "total_services_after_cleaning": total_services
+        }
+        print(f"  Services after cleaning: {total_services}")
 
         # Write output
         if output_path is None:

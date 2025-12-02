@@ -18,7 +18,7 @@ from bs4 import BeautifulSoup
 
 from ..config import get_settings, RateLimiter
 from ..schemas import ServiceCategory
-from ..transformers.service_cleaner import clean_all_providers
+from ..transformers.service_cleaner import clean_all_providers_async
 
 
 @dataclass
@@ -158,13 +158,21 @@ class WebsiteEnricher:
                 error=str(e)
             )
 
-    async def enrich_file(self, input_path: Path, output_path: Optional[Path] = None) -> Path:
+    async def enrich_file(
+        self,
+        input_path: Path,
+        output_path: Optional[Path] = None,
+        category: str = "MASSAGE",
+        use_llm: bool = True
+    ) -> Path:
         """
         Enrich all providers in a scraped JSON file.
 
         Args:
             input_path: Path to scraped providers JSON
             output_path: Optional output path (defaults to enriched_*.json)
+            category: Service category for cleanup rules (default: MASSAGE)
+            use_llm: Whether to use LLM for service name filtering
 
         Returns:
             Path to enriched output file
@@ -215,8 +223,9 @@ class WebsiteEnricher:
 
         # Clean services using service_cleaner (Section 5 rules)
         print("\nCleaning service names...")
-        category = data.get("metadata", {}).get("category", "MASSAGE").upper()
-        output_data = clean_all_providers(output_data, category=category, use_llm=True)
+        # Use passed category, fallback to metadata, then default
+        effective_category = category or data.get("metadata", {}).get("category", "MASSAGE").upper()
+        output_data = await clean_all_providers_async(output_data, category=effective_category, use_llm=use_llm)
 
         # Update stats with cleaning results
         total_services = sum(len(p.get('services', [])) for p in output_data.get('providers', []))
