@@ -3,6 +3,7 @@ Scraper CLI Entry Point
 
 Usage:
     python -m scraper search --city="Miami" --category="MASSAGE"
+    python -m scraper enrich --input providers.json [--playwright] [--llm]
     python -m scraper fetch --url="https://example.com"
     python -m scraper stats
 """
@@ -12,12 +13,15 @@ import asyncio
 import sys
 import uuid
 from datetime import datetime
+from pathlib import Path
 
 from .config import get_settings
 from .schemas import ScrapedProvider, ScrapeRunStats, ServiceCategory
 from .sources import GooglePlacesSource, WebsiteSource
 from .normalizers import ProviderNormalizer, Deduplicator
 from .storage import JsonStore, TokenTracker
+from .enrichers.website_enricher import WebsiteEnricher
+from .enrichers.hybrid_enricher import HybridEnricher
 
 
 def create_parser() -> argparse.ArgumentParser:
@@ -63,6 +67,39 @@ def create_parser() -> argparse.ArgumentParser:
 
     # Stats command
     subparsers.add_parser("stats", help="Show scraping statistics")
+
+    # Enrich command
+    enrich_parser = subparsers.add_parser(
+        "enrich",
+        help="Enrich providers with services scraped from their websites"
+    )
+    enrich_parser.add_argument(
+        "--input", "-i",
+        required=True,
+        help="Input JSON file with providers",
+    )
+    enrich_parser.add_argument(
+        "--output", "-o",
+        help="Output file path (default: enriched_<input>)",
+    )
+    enrich_parser.add_argument(
+        "--playwright",
+        action="store_true",
+        default=False,
+        help="Use Playwright for JS-heavy booking systems (slower but better)",
+    )
+    enrich_parser.add_argument(
+        "--no-llm",
+        action="store_true",
+        default=False,
+        help="Disable LLM-assisted service name filtering",
+    )
+    enrich_parser.add_argument(
+        "--category",
+        default="MASSAGE",
+        choices=[c.value for c in ServiceCategory],
+        help="Service category for cleanup rules (default: MASSAGE)",
+    )
 
     return parser
 
@@ -171,6 +208,46 @@ async def cmd_fetch(args: argparse.Namespace) -> int:
         return 1
 
 
+async def cmd_enrich(args: argparse.Namespace) -> int:
+    """Execute enrich command - scrape services from provider websites."""
+    input_path = Path(args.input)
+
+    if not input_path.exists():
+        print(f"Error: Input file not found: {input_path}")
+        return 1
+
+    output_path = Path(args.output) if args.output else None
+    use_llm = not args.no_llm
+    category = args.category
+
+    print(f"Enriching providers from {input_path}")
+    print(f"  Playwright: {'enabled' if args.playwright else 'disabled'}")
+    print(f"  LLM filtering: {'enabled' if use_llm else 'disabled'}")
+    print(f"  Category: {category}")
+    print()
+
+    if args.playwright:
+        # Use hybrid enricher with Playwright for booking systems
+        async with HybridEnricher(headless=True) as enricher:
+            result_path = await enricher.enrich_file(
+                input_path,
+                output_path,
+                use_playwright=True
+            )
+    else:
+        # Use static enricher only (faster, no browser)
+        enricher = WebsiteEnricher()
+        result_path = await enricher.enrich_file(
+            input_path,
+            output_path,
+            category=category,
+            use_llm=use_llm
+        )
+
+    print(f"\nOutput saved to: {result_path}")
+    return 0
+
+
 def cmd_stats(_args: argparse.Namespace) -> int:
     """Execute stats command."""
     store = JsonStore()
@@ -209,6 +286,8 @@ def main() -> int:
         return asyncio.run(cmd_search(args))
     elif args.command == "fetch":
         return asyncio.run(cmd_fetch(args))
+    elif args.command == "enrich":
+        return asyncio.run(cmd_enrich(args))
     elif args.command == "stats":
         return cmd_stats(args)
 
