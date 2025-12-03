@@ -37,7 +37,7 @@ apps/api/dist/
 *.tsbuildinfo
 
 # Claude agent lock files (for parallel execution)
-claude/.locks/
+.claude/.locks/
 
 # Playwright MCP screenshots (managed by ua-tester)
 .playwright-mcp/

@@ -1,6 +1,6 @@
 # Discovery API Module
 
-This module implements the OpenSlots discovery endpoint as specified in `claude/docs/specs/discovery.md` and `claude/docs/specs/slot.md`.
+This module implements the OpenSlots discovery endpoint as specified in `claude-docs/docs/specs/discovery.md` and `claude-docs/docs/specs/slot.md`.
 
 ## Endpoint
 

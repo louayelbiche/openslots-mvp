@@ -61,7 +61,7 @@ openslots-mvp/
 │           │   └── MatchBadge.tsx      # Match likelihood
 │           └── types/
 │               └── discovery.ts        # TypeScript types
-├── claude/                     # AI agent configuration
+├── claude-docs/                # AI agent configuration
 │   ├── agents/                 # Agent definitions
 │   ├── policies/               # Git rules, standards
 │   └── reports/                # UAT reports

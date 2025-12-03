@@ -84,7 +84,7 @@ cat tests/logs/tests-$(date +%Y-%m-%d).json | jq 'length'
 
 ## Integration
 
-- Test logs are linked from `claude/reports/test-runs.md` for easy access
+- Test logs are linked from `claude-docs/reports/test-runs.md` for easy access
 - Session history references test logs via the `testsRun.logFile` field (e.g., `tests/logs/tests-2025-11-27.json`)
 - CI/CD systems can parse these logs for build reporting
 
